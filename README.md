@@ -1,6 +1,6 @@
 # Letter Relay
 
-A complete daily word puzzle in plain HTML, CSS and JavaScript. No dependencies, backend, account, build step, or API keys. Four starting words become four clue answers by passing one original letter from each of the first three rows to the next row.
+A complete daily word puzzle in plain HTML, CSS and JavaScript. No dependencies, backend, account, or API keys. Local play runs directly from source; deployment versions the static assets to keep browser caches consistent. Four starting words become four clue answers by passing one original letter from each of the first three rows to the next row.
 
 The postal theme gives the game a smiling mail mascot, pastel word stops, rounded letter tiles, and short delivery animations. The Fredoka and Nunito fonts are bundled locally in `assets/fonts/` with their SIL Open Font Licenses, so the live game makes no third-party font requests. Motion respects the browser’s reduced-motion preference.
 
@@ -107,3 +107,7 @@ Browser QA exercised the drag tutorial, direct dragging at a 390px emulated phon
 ## Five-player playtest
 
 Ask five new players to open the game without an explanation. Record whether each completes the tutorial, makes a first move unaided, finishes a puzzle, and understands the share result. Ask them to return the following day and note how many do. Capture where they hesitate and what they expected to happen. Compare those observations after each revision. No analytics or tracking service is installed, and this checklist does not substitute for actual player sessions.
+
+## Asset updates
+
+`npm run build` creates `public/` with a content-based release version on the stylesheet, entry script, and every module import. GitHub Actions publishes that folder. An already-open tab still needs a refresh to load a new release; saved puzzle progress is retained. If an older interface remains visible, use Ctrl+Shift+R (Windows) to reload it.

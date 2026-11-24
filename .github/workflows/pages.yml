@@ -24,10 +24,7 @@ jobs:
       - run: npm test
       - run: npm run validate
       - name: Collect static game files
-        run: |
-          mkdir public
-          cp index.html styles.css app.js engine.js sharing.js progression.js effects.js tutorial.js puzzles.js favicon.svg .nojekyll public/
-          cp -R assets public/assets
+        run: node scripts/build.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
