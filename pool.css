@@ -138,7 +138,8 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
   [data-theme="pool"] h1,[data-theme="pool"] h1 span { font-size:42px; letter-spacing:-1.2px; }
   [data-theme="pool"] .edition { font-size:10px; }
   [data-theme="pool"] .dek { font-size:12px; }
-  [data-theme="pool"] .pool-lounge { min-height:102px; margin:8px 0 14px; padding-left:8px; }
+  [data-theme="pool"] .pool-lounge { min-height:132px; margin:8px 0 14px; justify-content:center; }
+  [data-theme="pool"] .motion-hint { max-width:100%; padding:0; font-size:10px; line-height:1.4; text-align:center; text-wrap:balance; }
   .pool-pal { width:100px; height:100px; }
   [data-theme="pool"] #game { padding:12px 10px; border-radius:22px; }
   [data-theme="pool"] .board-header { margin-bottom:10px; }
