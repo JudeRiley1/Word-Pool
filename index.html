@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="pool">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,12 @@
   <link rel="preload" href="./assets/fonts/fredoka-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="./assets/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./pool.css">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem('letter-relay:theme') === 'classic' ? 'classic' : 'pool'; } catch {}</script>
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+  <div class="pool-background" aria-hidden="true"><div class="pool-lanes"></div><div class="pool-light"></div></div>
   <a class="skip-link" href="#board">Skip to puzzle</a>
   <div class="shell">
     <header class="masthead">
@@ -25,11 +28,21 @@
     </header>
 
     <main id="main">
+      <div class="theme-switch" role="group" aria-label="Game theme"><button type="button" data-set-theme="pool" aria-pressed="true">Poolside</button><button type="button" data-set-theme="classic" aria-pressed="false">Classic</button></div>
       <section class="intro" aria-labelledby="page-title">
         <div class="edition"><span id="edition">DAILY RELAY</span><span class="edition-line"></span><span id="puzzle-date"></span></div>
         <div class="title-line"><h1 id="page-title">Letter <span>Relay</span></h1><svg class="post-pal" aria-hidden="true" viewBox="0 0 120 100"><path d="M9 39H2M14 50H4M15 61H9" stroke="#a997df" stroke-width="4" stroke-linecap="round"/><g transform="rotate(-9 65 50)"><rect x="24" y="18" width="84" height="66" rx="19" fill="#d4c5f3"/><rect x="24" y="12" width="84" height="66" rx="19" fill="#ffe496" stroke="#51358b" stroke-width="3"/><path d="m29 21 29 22a13 13 0 0 0 16 0l29-22" fill="#fff1ba" stroke="#51358b" stroke-width="3" stroke-linejoin="round"/><path d="M50 57v3m31-3v3" stroke="#51358b" stroke-width="4" stroke-linecap="round"/><path d="M61 62q5 6 10 0" fill="none" stroke="#51358b" stroke-width="3" stroke-linecap="round"/><ellipse cx="43" cy="63" rx="5" ry="3" fill="#ffa7a3"/><ellipse cx="88" cy="63" rx="5" ry="3" fill="#ffa7a3"/></g></svg></div>
         <p class="dek">Pass three letters down to solve four clues</p>
         <p id="theme-label" class="theme-label" hidden></p>
+      </section>
+
+      <section class="pool-lounge" aria-label="Platypus pool">
+        <div class="pool-scene" id="pool-scene">
+          <span class="pool-depth" aria-hidden="true">THE SHALLOW END</span>
+          <div class="lane-rope rope-one" aria-hidden="true"></div><div class="lane-rope rope-two" aria-hidden="true"></div>
+          <button id="pool-pal" class="pool-pal" aria-label="Nudge the floating platypus. You can also drag it."><span class="pal-wake"></span><span class="pal-squish"><img class="platypus-art" src="./assets/platypus-pool.png" alt="A platypus lounging on its back in a coral floaty, wearing sunglasses and sipping a drink through a straw" draggable="false"><span class="sip-bubble" aria-hidden="true"></span></span></button>
+        </div>
+        <div class="pool-tools"><span id="pool-status" role="status">Meet your pool pal</span><div><button id="pool-tilt" type="button" aria-pressed="false">Tilt pool</button><button id="pool-motion" type="button" aria-pressed="true">Pause water</button></div></div>
       </section>
 
       <div id="practice-banner" class="practice-banner" hidden><span><strong id="mode-label">Practice relay</strong><br><span id="mode-note">Separate from your daily stats</span></span><button id="exit-practice" class="text-button">Back to daily</button></div>

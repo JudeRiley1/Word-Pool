@@ -12,6 +12,7 @@ test('deployment versions HTML assets and the entire module graph together', asy
     const html = await readFile(join(output, 'index.html'), 'utf8');
     assert.ok(html.includes(`./app.js?v=${version}`));
     assert.ok(html.includes(`./styles.css?v=${version}`));
+    assert.ok(html.includes(`./pool.css?v=${version}`));
     assert.ok(html.includes(`name="application-version" content="${version}"`));
     for (const name of (await readdir(output)).filter(n => n.endsWith('.js'))) {
       const js = await readFile(join(output, name), 'utf8');
@@ -22,6 +23,7 @@ test('deployment versions HTML assets and the entire module graph together', asy
     }
     assert.ok(!(await readFile(join(output, 'app.js'), 'utf8')).includes('slot-line'));
     await readFile(join(output, 'assets/fonts/nunito-latin.woff2'));
+    await readFile(join(output, 'assets/platypus-pool.png'));
     assert.equal(await buildSite(output), version, 'Identical source produces the same version');
   } finally {
     assert.equal(dirname(resolve(output)), resolve(tmpdir()));

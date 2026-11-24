@@ -1,0 +1,119 @@
+.theme-switch { display: flex; justify-content: center; gap: 3px; width: max-content; margin: 18px auto 0; padding: 4px; border: 1px solid var(--line); background: #ffffffc9; border-radius: 30px; }
+.theme-switch button { min-height: 36px; border: 0; padding: 7px 18px; border-radius: 24px; font-size: 13px; font-weight: 900; background: transparent; color: var(--muted); }
+.theme-switch button[aria-pressed="true"] { color: #fff; background: var(--purple); box-shadow: 0 2px 5px #1647551a; }
+.pool-background, .pool-lounge { display: none; }
+html[data-theme="pool"] { --paper: #cceff2; --ink: #183f50; --muted: #527782; --purple: #087e91; --purple-dark: #075b70; --line: #badde2; --yellow: #ffe3a0; }
+html[data-theme="pool"] body { background: #bce6ed; }
+[data-theme="pool"] .pool-background { display: block; position: fixed; inset: 0; overflow: hidden; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 20% 0%, #e5faffb3, transparent 65%), linear-gradient(125deg,#b6e9ed,#87cfdd); }
+.pool-lanes { position: absolute; inset: -30px; opacity: .22; background: repeating-linear-gradient(90deg,transparent 0,transparent calc(50% - 2px),#ffffffa3 calc(50% - 2px),#ffffffa3 50%),repeating-linear-gradient(0deg,transparent 0,transparent 46px,#ffffff8a 46px,#ffffff8a 48px); background-size: 96px 48px; }
+.pool-lanes::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg,transparent 0, transparent 205px,#247e9a66 205px,#247e9a66 212px,transparent 212px,transparent 420px); }
+.pool-light { position: absolute; inset: -15%; opacity: .55; background: repeating-radial-gradient(ellipse at 20% 45%,transparent 0 45px,#ffffff60 47px,transparent 52px 88px),repeating-radial-gradient(ellipse at 78% 20%,transparent 0 66px,#eaffff70 69px,transparent 74px 128px); background-size: 420px 320px,570px 470px; filter: blur(2px); animation: pool-caustics 18s ease-in-out infinite alternate; }
+[data-theme="pool"] .shell { max-width: 1000px; }
+[data-theme="pool"] main { max-width: 620px; }
+[data-theme="pool"] .brand-mark { color: #12687b; }
+[data-theme="pool"] .nav-button { background: #faffff; border: 1px solid #b1d9df; box-shadow: 0 3px 0 #8bbfc9; border-radius: 14px; color: #255768; }
+[data-theme="pool"] .intro { padding: 17px 0 16px; }
+[data-theme="pool"] .edition { color: #326c7f; letter-spacing: 1.4px; }
+[data-theme="pool"] .edition-line { background: #f39b75; }
+[data-theme="pool"] .title-line { margin: 9px 0 5px; }
+[data-theme="pool"] h1 { color: #087e91; text-shadow: 0 3px 0 #e8ffff; letter-spacing: -1.9px; }
+[data-theme="pool"] h1 span { color: #164f64; }
+[data-theme="pool"] .post-pal { display: none; }
+[data-theme="pool"] .dek { color: #326878; font-size: 16px; }
+[data-theme="pool"] .pool-lounge { display: block; margin: 0 0 20px; border: 7px solid #f5f6ec; border-radius: 27px; background: #f5f6ec; box-shadow: 0 3px 0 #8dbec6,0 9px 24px #286a7514; }
+.pool-scene { height: 196px; position: relative; overflow: hidden; border-radius: 20px 20px 13px 13px; border: 2px solid #65b7c8; box-shadow: inset 0 5px 14px #167b9d24; background-color: #6ecddb; background-image: linear-gradient(#edffff30 1px,transparent 1px),linear-gradient(90deg,#edffff30 1px,transparent 1px),radial-gradient(ellipse at 35% 0%,#bcf6f8,transparent 75%); background-size: 30px 30px,30px 30px,100% 100%; }
+.pool-scene::before { content: ''; position: absolute; inset: -25%; pointer-events: none; background: repeating-radial-gradient(ellipse at 40% 30%,transparent 0 26px,#efffff55 29px,transparent 33px 64px); background-size: 230px 190px; filter: blur(1px); opacity: .75; animation: pool-caustics 12s ease-in-out infinite alternate; }
+.pool-scene::after { content: ''; position: absolute; pointer-events: none; top: 0; bottom: 0; left: 50%; width: 5px; background: #197c9940; box-shadow: 0 0 1px #ffffff30; }
+.pool-depth { position: absolute; left: 15px; top: 12px; color: #16677c; font-size: 10px; letter-spacing: 2px; font-weight: 900; }
+.lane-rope { position: absolute; left: 0; right: 0; height: 5px; border-radius: 10px; background: repeating-linear-gradient(90deg,#fff5dc 0 14px,#ef9c79 14px 28px); box-shadow: 0 2px 0 #22748c35; opacity: .8; pointer-events: none; }
+.rope-one { top: 38px; }.rope-two { bottom: 19px; }
+.pool-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 5px 1px 9px; color: #527782; font-size: 12px; }
+.pool-tools > span { max-width: 50%; line-height: 1.35; }
+.pool-tools > div { display: flex; gap: 5px; }
+.pool-tools button { min-height: 36px; background: #fff; border: 1px solid #c0dadd; border-radius: 11px; padding: 7px 10px; color: #246376; font-size: 12px; font-weight: 900; white-space: nowrap; }
+.pool-tools button[aria-pressed="true"]#pool-tilt { background: #087e91; color: #fff; border-color: #087e91; }
+.pool-tools button:disabled { opacity: .6; }
+.pool-pal { position: absolute; left: 8px; top: 8px; width: 120px; height: 120px; z-index: 2; background: transparent; border: 0; padding: 0; touch-action: none; cursor: grab; will-change: transform; -webkit-user-select: none; user-select: none; }
+.pool-pal:active { cursor: grabbing; }
+.pal-squish { display: block; width: 100%; height: 100%; position: relative; transform-origin: 50% 60%; }
+.platypus-art { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 7px 3px #1b72964d); animation: pal-sip 6s ease-in-out infinite; }
+.pal-wake { position: absolute; inset: 24% 4% 7%; border: 2px solid #ddffffa6; border-radius: 50%; box-shadow: 0 0 0 6px #d7ffff23; animation: wake 3s ease-in-out infinite; }
+.sip-bubble { position: absolute; left: 34%; top: 35%; width: 4px; height: 4px; border: 1px solid #fff; border-radius: 50%; opacity: 0; animation: sip 6s ease-in-out infinite; pointer-events: none; }
+.pool-pal.is-held .platypus-art { animation-play-state: paused; filter: drop-shadow(0 12px 6px #1b729652); }
+.pool-ripple { position: absolute; z-index: 1; width: 45px; height: 30px; border: 2px solid #e5ffffb3; border-radius: 50%; pointer-events: none; animation: pool-ripple .9s ease-out forwards; }
+[data-theme="pool"] #game { background: #edf8f8; border: 1px solid #acd4dc; border-radius: 26px; padding: 19px 18px 15px; box-shadow: 0 6px 0 #8ebdc7,0 14px 35px #165f7721; }
+[data-theme="pool"] .board-header { color: #3e6b7b; margin-bottom: 15px; }
+[data-theme="pool"] .delivery-progress { color: #106e80; background: #d6ecee; padding: 7px 12px; }
+[data-theme="pool"] #board { gap: 13px; }
+[data-theme="pool"] .puzzle-row { --row-bg: #fff; --row-border: #b4dce1; --row-ink: #3d7381; background: #fff; border: 1px solid #c0dfe3; border-bottom: 1px solid #b6d6dc; border-radius: 17px; padding: 13px 15px 14px; box-shadow: 0 4px 0 #cee5e8,0 6px 12px #295a6a07; }
+[data-theme="pool"] .row-number { border: 0; background: #fbd6bf; color: #845236; border-radius: 8px; font-size: 14px; }
+[data-theme="pool"] .puzzle-row:nth-child(even) .row-number { background: #d4edf0; color: #246b7b; }
+[data-theme="pool"] .clue { font-size: 15px; font-weight: 800; }
+[data-theme="pool"] .tile { background: linear-gradient(160deg,#ffffff 30%,#f0f9fa); border: 1px solid #acd2d9; border-bottom-color: #89b8c3; border-radius: 12px; color: #18485b; box-shadow: inset 0 2px 0 #fff,0 4px 0 #9dc8d1,0 6px 6px #245a7010; font-family: Nunito,sans-serif; font-size: 28px; font-weight: 900; }
+[data-theme="pool"] button.tile:hover { border-color: #4ba2b5; background: #eaf8fa; box-shadow: inset 0 2px 0 #fff,0 5px 0 #75b4c2; transform: translateY(-1px); }
+[data-theme="pool"] .tile.received::after { border-color: #72b5c3; color: #086d83; background: #eafafd; }
+[data-theme="pool"] .tile.selected { background: #d1eaf0; color: #347488; opacity: .4; }
+[data-theme="pool"] .starting-word { font-weight: 700; letter-spacing: .2px; }
+[data-theme="pool"] .drop-row { outline: 2px dashed #7fbac5; outline-offset: 3px; }
+[data-theme="pool"] .drop-row.is-over { outline: 3px solid #168ca0; background: #e7f8fa; }
+[data-theme="pool"] .drop-marker { width: 5px; background: #ef9472; box-shadow: 0 0 0 2px #fff,0 0 0 4px #ef947230; }
+[data-theme="pool"] .drop-preview { color: #126d80; }
+[data-theme="pool"] .instruction { color: #23677a; }
+[data-theme="pool"] .game-controls { position: static; background: transparent; border-top: 0; }
+[data-theme="pool"] h2,[data-theme="pool"] .eyebrow { color: #22677c; }
+[data-theme="pool"] dialog::backdrop { background: #144d6266; }
+[data-theme="pool"] .close-button { background: #e3f2f5; color: #276c7e; }
+[data-theme="pool"] .secondary-button { background: #f8ffff; border-color: #c4dfe4; color: #356d7d; }
+[data-theme="pool"] .secondary-button:hover:not(:disabled) { background: #e1f3f5; }
+[data-theme="pool"] .primary-button { border-radius: 14px; background: #087e91; border-color: #07576c; box-shadow: 0 4px 0 #07576c; }
+[data-theme="pool"] .primary-button:hover:not(:disabled) { background: #098da1; }
+[data-theme="pool"] .primary-button:disabled { background: #d9e9ec; border-color: #bed4db; box-shadow: 0 3px 0 #bed4db; color: #668590; }
+[data-theme="pool"] .check-dot { color: #56818d; border-color: #b8d6dd; background: #f5ffff; }
+[data-theme="pool"] .check-dot.used { color: #fff; border-color: #4c93a3; background: #5a9eae; }
+[data-theme="pool"] .check-counter { color: #527782; }
+[data-theme="pool"] .puzzle-row.matched { background: #eef9f1; border-color: #a1cdb3; }
+[data-theme="pool"] .puzzle-row .tile.letter-correct { background: #35835e; border-color: #28694a; box-shadow: inset 0 2px 0 #ffffff20,0 4px 0 #28694a; color: #fff; }
+[data-theme="pool"] .puzzle-row .tile.letter-present { background: #f2ce71; border-color: #bd943b; box-shadow: inset 0 2px 0 #ffffff50,0 4px 0 #bd943b; color: #493913; }
+[data-theme="pool"] .puzzle-row .tile.letter-absent { background: #758591; border-color: #536774; box-shadow: inset 0 2px 0 #ffffff20,0 4px 0 #536774; color: #fff; }
+[data-theme="pool"] .drag-ghost,[data-theme="pool"] .flying-tile { border-color: #64aabd; background: #fff; box-shadow: 0 10px 20px #16546b35; }
+[data-theme="pool"] dialog { background: #f8fdfd; border-color: #bad8df; color: #183f50; }
+[data-theme="pool"] dialog p,[data-theme="pool"] .rules,[data-theme="pool"] .keyboard-note { color: #416b7b; }
+[data-theme="pool"] .rule-note,[data-theme="pool"] .tutorial-row { background: #e3f2f4; color: #315e70; }
+[data-theme="pool"] .archive-card { background: #e9f5f6; border-color: #bad8df; }
+[data-theme="pool"] .archive-card:nth-child(even) { background: #fff3df; }
+[data-theme="pool"] .result { background: #e1f3ee; border-color: #add3c6; }
+[data-theme="pool"] .result p { color: #3e746c; }
+[data-theme="pool"] .hard-invite { border-color: #aad3da; }
+[data-theme="pool"] .postcard { background: #fbf8e9; border-color: #ded5af; box-shadow: 0 4px 0 #c4c3a9; }
+[data-theme="pool"] .postage.earned { background: #d4edf0; color: #206c7d; border-color: #87bbc6; box-shadow: 2px 3px 0 #b8d6d8; }
+[data-theme="pool"] footer { color: #336d7f; }
+[data-pool-motion="off"] .pool-light,[data-pool-motion="off"] .pool-scene::before,[data-pool-motion="off"] .platypus-art,[data-pool-motion="off"] .pal-wake,[data-pool-motion="off"] .sip-bubble { animation-play-state: paused; }
+[data-theme="classic"] .pool-background,[data-theme="classic"] .pool-lounge { display: none; }
+@keyframes pool-caustics { from { transform: translate(-1%,-1%) scale(1); } to { transform: translate(3%,2%) scale(1.09); } }
+@keyframes pal-sip { 0%,35%,70%,100% { transform: translateY(0) rotate(-2deg); } 45%,59% { transform: translateY(-3px) rotate(1deg) scale(1.025,.985); } 52% { transform: translateY(-2px) rotate(0deg) scale(.99,1.01); } 83% { transform: translateY(2px) rotate(-1deg); } }
+@keyframes wake { 0%,100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.08); opacity: .8; } }
+@keyframes sip { 0%,40%,65%,100% { opacity: 0; transform: translateY(0) scale(.5); } 48% { opacity: .8; } 60% { opacity: 0; transform: translateY(-10px) scale(1.15); } }
+@keyframes pool-ripple { from { transform: translate(-50%,-50%) scale(.6); opacity: .9; } to { transform: translate(-50%,-50%) scale(4); opacity: 0; } }
+@media(max-width:719px) {
+  .theme-switch { margin-top: 12px; }
+  .theme-switch button { min-height: 36px; padding: 6px 16px; }
+  [data-theme="pool"] .intro { padding: 12px 0; }
+  [data-theme="pool"] .title-line { margin: 5px 0; }
+  [data-theme="pool"] h1 { font-size: 40px; letter-spacing: -1.5px; }
+  [data-theme="pool"] .dek { font-size: 13px; }
+  [data-theme="pool"] .pool-lounge { margin-bottom: 15px; border-width: 5px; border-radius: 22px; }
+  .pool-scene { height: 164px; border-radius: 16px 16px 10px 10px; }
+  .pool-pal { width: 96px; height: 96px; }
+  .pool-tools { padding: 5px 2px 0 5px; font-size: 11px; }
+  .pool-tools button { min-height: 44px; padding: 6px 8px; font-size: 11px; }
+  .pool-tools > span { max-width: 42%; }
+  [data-theme="pool"] #game { padding: 12px 10px; border-radius: 22px; }
+  [data-theme="pool"] .board-header { margin-bottom: 10px; }
+  [data-theme="pool"] #board { gap: 10px; }
+  [data-theme="pool"] .puzzle-row { padding: 9px 9px 12px; border-radius: 14px; }
+  [data-theme="pool"] .clue { font-size: 13px; }
+  [data-theme="pool"] .row-number { width: 22px; height: 22px; flex-basis: 22px; font-size: 12px; border-radius: 6px; }
+  [data-theme="pool"] .row-heading { margin-bottom: 7px; }
+  [data-theme="pool"] .tile { font-size: 25px; border-radius: 10px; }
+}
+@media(prefers-reduced-motion:reduce) { .pool-light,.pool-scene::before,.platypus-art,.pal-wake,.sip-bubble,.pool-ripple { animation: none!important; } }

@@ -108,6 +108,18 @@ Browser QA exercised the drag tutorial, direct dragging at a 390px emulated phon
 
 Ask five new players to open the game without an explanation. Record whether each completes the tutorial, makes a first move unaided, finishes a puzzle, and understands the share result. Ask them to return the following day and note how many do. Capture where they hesitate and what they expected to happen. Compare those observations after each revision. No analytics or tracking service is installed, and this checklist does not substitute for actual player sessions.
 
-## Asset updates
+## Poolside and Classic
+
+Poolside is the default presentation. The visible Poolside / Classic switch restores the original lavender theme at any time. Selection uses the separate `letter-relay:theme` storage key; puzzles, streaks, checks, sound preferences, and saved transfers are unchanged by switching. The original `styles.css` is retained; Poolside overrides live in `pool.css`. The Git tag `classic-before-poolside` preserves the complete previous release.
+
+The pool has a generated transparent platypus mascot, animated water and lanes, a gentle sip/bob cycle, and damped float physics with squash and ripples on collision. Drag or tap the mascot, or use its arrow-key controls. On phones, press **Tilt pool** while holding the phone comfortably. The first valid sensor reading becomes the neutral position. Sensor permission is requested only from that click when the browser requires it. Tilt is optional, requires a supported browser and HTTPS, and falls back to dragging when unavailable or denied. See [MDN device orientation](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static).
+
+**Pause water** stops ambient motion and disables tilt. System reduced-motion preferences also disable decorative motion. The physics loop sleeps when offscreen, in a hidden tab, or in Classic. The mascot is bounded within its pool, separate from the puzzle's drag targets. A correct relay gives it a little victory bounce. Existing sound settings apply to the softer Poolside drop note.
+
+The artwork and exact generation prompt are in `assets/platypus-pool.png` and `assets/platypus-pool-prompt.md`. Generated with the built-in image tool, with original transparency preserved.
+
+Poolside validation includes physics tests for every wall, sustained tilt, rotation, resize, damping, and frame stalls. A headless browser checked 320px, 390px, and desktop layouts, artwork loading, theme persistence, pause, simulated orientation events, and reduced motion without controlling the owner's screen. Actual phone sensor sensitivity and the operating system's permission prompt still need a real-device check.
+
+## Release cache
 
 `npm run build` creates `public/` with a content-based release version on the stylesheet, entry script, and every module import. GitHub Actions publishes that folder. An already-open tab still needs a refresh to load a new release; saved puzzle progress is retained. If an older interface remains visible, use Ctrl+Shift+R (Windows) to reload it.

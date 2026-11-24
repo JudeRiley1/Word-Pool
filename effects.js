@@ -46,6 +46,10 @@ export function playSound(enabled, win = false) {
       const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
       const time = audioContext.currentTime + i * .11;
       oscillator.type = 'sine'; oscillator.frequency.value = frequency;
+      if (!win && document.documentElement.dataset.theme === 'pool') {
+        oscillator.frequency.setValueAtTime(620, time);
+        oscillator.frequency.exponentialRampToValueAtTime(260, time + .14);
+      }
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(.055, time + .015);
       gain.gain.exponentialRampToValueAtTime(.001, time + .16);

@@ -4,6 +4,9 @@ import { deliverShare } from './sharing.js';
 import { puzzleDate, resolvePuzzleLink, puzzleLink, postcard, saveProgress, insertionGap } from './progression.js';
 import { captureTiles, animateHandoff, playSound, installDrag } from './effects.js';
 import { installTutorial } from './tutorial.js';
+import { installPool } from './pool.js';
+
+installPool();
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
