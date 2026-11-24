@@ -5,7 +5,12 @@
 html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --purple:#67416d; --purple-dark:#49334e; --line:#dfd2d6; --yellow:#ffda47; }
 [data-theme="pool"] body { background:#05b4c9; isolation:isolate; }
 [data-theme="pool"] .pool-background { display:block; position:fixed; inset:0; overflow:hidden; z-index:-1; pointer-events:none; background:#05b4c9; }
-.pool-light { position:absolute; inset:-80px; background:url('./assets/water-lines.svg') 0 0 / 640px 640px; opacity:.3; animation:water-drift 22s ease-in-out infinite alternate; }
+.pool-light { position:absolute; inset:-80px; background:url('./assets/water-lines.svg') 0 0 / 520px 520px; opacity:.3; animation:water-drift 22s ease-in-out infinite alternate; }
+/* Sunlight catches sections of the same water lines, keeping the flat artwork. */
+.pool-light::before,.pool-light::after { content:''; position:absolute; inset:0; background:inherit; filter:brightness(1.3); pointer-events:none; }
+.pool-light::before { mask-image:radial-gradient(ellipse 190px 140px at 22% 28%,#000 10%,transparent 75%),radial-gradient(ellipse 220px 170px at 76% 72%,#000 5%,transparent 75%); animation:water-glimmer 8s ease-in-out infinite; }
+.pool-light::after { mask-image:radial-gradient(ellipse 170px 210px at 72% 18%,#000 5%,transparent 75%),radial-gradient(ellipse 240px 160px at 25% 80%,#000 5%,transparent 75%); animation:water-glimmer 11s ease-in-out -5s infinite; }
+.pool-background::after { content:''; position:absolute; inset:-40px; pointer-events:none; background:radial-gradient(ellipse at 20% 28%,#c7ffed 0,transparent 40%),radial-gradient(ellipse at 80% 75%,#a2f9ef 0,transparent 38%); opacity:.045; animation:water-sheen 13s ease-in-out infinite alternate; }
 [data-theme="pool"] .pool-scene { display:block; position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
 [data-theme="pool"] .shell { position:relative; z-index:1; pointer-events:none; max-width:1020px; }
 [data-theme="pool"] .masthead,[data-theme="pool"] .intro,[data-theme="pool"] #game,[data-theme="pool"] .practice-banner,[data-theme="pool"] .postcard,[data-theme="pool"] #unavailable,[data-theme="pool"] footer { pointer-events:auto; }
@@ -112,8 +117,10 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 [data-theme="pool"] .postage.today { outline:none; }
 [data-theme="pool"] .postage.today > span { outline:2px solid #124653; outline-offset:3px; }
 [data-theme="pool"] footer { color:#163e50; }
-[data-pool-motion="off"] .pool-light,[data-pool-motion="off"] .platypus-art,[data-pool-motion="off"] .pal-wake,[data-pool-motion="off"] .sip-bubble { animation-play-state:paused; }
+[data-pool-motion="off"] .pool-light,[data-pool-motion="off"] .pool-light::before,[data-pool-motion="off"] .pool-light::after,[data-pool-motion="off"] .pool-background::after,[data-pool-motion="off"] .platypus-art,[data-pool-motion="off"] .pal-wake,[data-pool-motion="off"] .sip-bubble { animation-play-state:paused; }
 @keyframes water-drift { from { transform:translate(-14px,-8px); } to { transform:translate(14px,8px); } }
+@keyframes water-glimmer { 0%,100% { opacity:.08; } 45% { opacity:.85; } 70% { opacity:.3; } }
+@keyframes water-sheen { from { opacity:.025; transform:translate(-12px,8px); } to { opacity:.075; transform:translate(18px,-14px); } }
 @keyframes pal-float { 0%,100% { transform:rotate(-2deg); } 50% { transform:rotate(2deg); } }
 @keyframes wake { 0%,100% { transform:scale(1); opacity:.35; } 50% { transform:scale(1.06); opacity:.65; } }
 @keyframes sip { 0%,40%,65%,100% { opacity:0; transform:translateY(0); } 48% { opacity:.8; } 60% { opacity:0; transform:translateY(-8px); } }
@@ -137,4 +144,4 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
   [data-theme="pool"] .tile { font-size:25px; border-radius:9px; }
 }
 @media(max-width:350px) { .life-label { display:none; } [data-theme="pool"] .controls-heading { gap:8px; } }
-@media(prefers-reduced-motion:reduce) { .pool-light,.platypus-art,.pal-wake,.sip-bubble,.pool-ripple { animation:none!important; } .swim-wake,.wake-trail { display:none; } }
+@media(prefers-reduced-motion:reduce) { .pool-light,.pool-light::before,.pool-light::after,.pool-background::after,.platypus-art,.pal-wake,.sip-bubble,.pool-ripple { animation:none!important; } .pool-light::before,.pool-light::after { opacity:.15; } .swim-wake,.wake-trail { display:none; } }
