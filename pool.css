@@ -127,15 +127,19 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 @keyframes wake { 0%,100% { transform:scale(1); opacity:.35; } 50% { transform:scale(1.06); opacity:.65; } }
 @keyframes sip { 0%,40%,65%,100% { opacity:0; transform:translateY(0); } 48% { opacity:.8; } 60% { opacity:0; transform:translateY(-8px); } }
 @media(max-width:719px) {
-  [data-theme="pool"] .masthead { padding-top:max(18px, env(safe-area-inset-top)); margin-bottom:20px; }
-  [data-theme="pool"] .intro { padding:12px 10px 0; }
-  [data-theme="pool"] .title-line { margin:14px 0 15px; }
-  [data-theme="pool"] .dek { max-width:250px; margin:0 auto; line-height:1.5; }
-  [data-theme="pool"] h1,[data-theme="pool"] h1 span { font-size:45px; letter-spacing:-1.2px; }
+  [data-theme="pool"] .masthead { padding-top:max(10px, env(safe-area-inset-top)); margin-bottom:18px; }
+  [data-theme="pool"] .masthead .brand { display:none; }
+  [data-theme="pool"] .masthead nav { width:100%; justify-content:space-between; gap:8px; }
+  [data-theme="pool"] .nav-button { background:#fff9edbf; border-radius:13px; padding:0 13px; font-size:12px; }
+  [data-theme="pool"] .nav-button.music-toggle { width:44px; padding:0; }
+  [data-theme="pool"] .intro { display:flex; flex-direction:column; align-items:center; gap:10px; padding:0 8px; }
+  [data-theme="pool"] .title-line { order:-1; margin:0 0 3px; }
+  [data-theme="pool"] .dek { max-width:100%; margin:0; line-height:1.5; text-wrap:balance; }
+  [data-theme="pool"] h1,[data-theme="pool"] h1 span { font-size:42px; letter-spacing:-1.2px; }
   [data-theme="pool"] .edition { font-size:10px; }
-  [data-theme="pool"] .dek { font-size:13px; }
-  [data-theme="pool"] .pool-lounge { min-height:136px; margin-bottom:18px; }
-  .pool-pal { width:118px; height:118px; }
+  [data-theme="pool"] .dek { font-size:12px; }
+  [data-theme="pool"] .pool-lounge { min-height:102px; margin:8px 0 14px; padding-left:8px; }
+  .pool-pal { width:100px; height:100px; }
   [data-theme="pool"] #game { padding:12px 10px; border-radius:22px; }
   [data-theme="pool"] .board-header { margin-bottom:10px; }
   [data-theme="pool"] #board { gap:10px; }
@@ -147,3 +151,8 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 }
 @media(max-width:350px) { .life-label { display:none; } [data-theme="pool"] .controls-heading { gap:8px; } }
 @media(prefers-reduced-motion:reduce) { .pool-light,.pool-light::before,.pool-light::after,.pool-background::after,.platypus-art,.pal-wake,.sip-bubble,.pool-ripple { animation:none!important; } .pool-light::before,.pool-light::after { opacity:.15; } .swim-wake,.wake-trail,.tile-splash { display:none; } }
+
+.music-toggle { display:grid; place-items:center; width:44px; min-height:44px; padding:0; }
+.nav-button.music-toggle svg { display:block; width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.music-slash { display:none; }
+.music-toggle[aria-pressed="false"] .music-slash { display:block; }

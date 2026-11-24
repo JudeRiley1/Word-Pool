@@ -41,30 +41,7 @@ export function animateHandoff(before, movingKey, root = document) {
   });
 }
 
-let audioContext;
-export function playSound(enabled, win = false) {
-  if (!enabled) return;
-  try {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) return;
-    audioContext ??= new Context();
-    audioContext.resume().catch(() => {});
-    (win ? [523, 659, 784] : [523]).forEach((frequency, i) => {
-      const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
-      const time = audioContext.currentTime + i * .11;
-      oscillator.type = 'sine'; oscillator.frequency.value = frequency;
-      if (!win && document.documentElement.dataset.theme === 'pool') {
-        oscillator.frequency.setValueAtTime(620, time);
-        oscillator.frequency.exponentialRampToValueAtTime(260, time + .14);
-      }
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(.055, time + .015);
-      gain.gain.exponentialRampToValueAtTime(.001, time + .16);
-      oscillator.connect(gain); gain.connect(audioContext.destination);
-      oscillator.start(time); oscillator.stop(time + .18);
-    });
-  } catch { /* Audio is optional; unsupported devices keep playing silently. */ }
-}
+export { playSound } from './audio.js';
 
 export function installDrag(board, { enabled, begin, target, drop, cancel }) {
   let pending, ghost, hovered, frame, blockClickUntil = 0;

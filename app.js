@@ -5,8 +5,10 @@ import { puzzleDate, resolvePuzzleLink, puzzleLink, postcard, saveProgress, inse
 import { captureTiles, animateHandoff, playSound, installDrag } from './effects.js';
 import { installTutorial } from './tutorial.js';
 import { installPool } from './pool.js';
+import { installAudio } from './audio.js';
 
 installPool();
+installAudio();
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -67,7 +69,7 @@ function focusKey(key) { document.querySelector(`[data-focus="${key}"]`)?.focus(
 function render() {
   const puzzle = currentPuzzle(), state = currentState();
   const active = document.activeElement?.dataset?.focus;
-  $('#edition').textContent = practicing ? 'PRACTICE' : puzzle?.kind === 'hard' ? 'DAILY CHALLENGE' : archivePuzzle ? 'FROM THE ARCHIVE' : 'YOUR DAILY WORD PUZZLE';
+  $('#edition').textContent = practicing ? 'PRACTICE' : puzzle?.kind === 'hard' ? 'DAILY CHALLENGE' : archivePuzzle ? 'FROM THE ARCHIVE' : 'DAILY WORD PUZZLE';
   $('#puzzle-date').textContent = archivePuzzle && archiveIndex === null ? 'BONUS COLLECTION' : dateLabel(puzzleDate(START_DATE, archivePuzzle ? archiveIndex : today)).toUpperCase();
   $('#practice-banner').hidden = !practicing && !archivePuzzle;
   $('#mode-label').textContent = practicing ? 'Practice relay' : archivePuzzle?.title || `Archive relay #${puzzle?.id}`;
@@ -297,7 +299,7 @@ $('#check').addEventListener('click', () => {
   revealing = true;
   render();
   clearTimeout(revealTimer);
-  playSound(preferences.sound, outcome.kind === 'won');
+  playSound(preferences.sound, outcome.kind === 'won' ? 'win' : outcome.kind === 'lost' ? 'lost' : 'check');
   if (outcome.kind === 'won') {
     $('.post-pal').classList.remove('happy');
     requestAnimationFrame(() => $('.post-pal').classList.add('happy'));
