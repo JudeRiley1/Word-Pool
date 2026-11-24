@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 const flush = () => new Promise(resolve => setImmediate(resolve));
 let moduleId = 0;
 
-async function setup(t, { saved = {}, deferredDecode = false, blocked = false, storageFails = false } = {}) {
-  const sources = [], decodes = [], media = [], contexts = [];
+async function setup(t, { saved = {}, deferredDecode = false, deferredResume = false, blocked = false, storageFails = false } = {}) {
+  const sources = [], decodes = [], resumes = [], media = [], contexts = [];
   const storage = new Map(Object.entries(saved));
   const button = new EventTarget();
   button.attributes = {};
@@ -26,8 +26,11 @@ async function setup(t, { saved = {}, deferredDecode = false, blocked = false, s
     pause() { this.paused = true; }
   }
   class FakeContext {
-    constructor() { this.state = 'running'; this.currentTime = 0; contexts.push(this); }
-    resume() { this.state = 'running'; return Promise.resolve(); }
+    constructor() { this.state = deferredResume ? 'suspended' : 'running'; this.currentTime = 0; contexts.push(this); }
+    resume() {
+      if (deferredResume) return new Promise(resolve => resumes.push(() => { this.state = 'running'; resolve(); }));
+      this.state = 'running'; return Promise.resolve();
+    }
     suspend() { this.state = 'suspended'; return Promise.resolve(); }
     decodeAudioData() {
       return deferredDecode ? new Promise(resolve => decodes.push(() => resolve({}))) : Promise.resolve({});
@@ -66,7 +69,8 @@ async function setup(t, { saved = {}, deferredDecode = false, blocked = false, s
   return {
     ...audio, button, document, window, sources, storage, media: media[0], contexts,
     toggle: () => button.dispatchEvent(new Event('click')),
-    finishDecode: async () => { decodes.forEach(resolve => resolve()); await flush(); }
+    finishDecode: async () => { decodes.forEach(resolve => resolve()); await flush(); },
+    finishResume: async () => { resumes.splice(0).forEach(resolve => resolve()); await flush(); }
   };
 }
 
@@ -104,6 +108,27 @@ test('muting invalidates pending decodes even if sound is turned back on before 
   assert.equal(audio.sources.length, 0, 'No stale sounds after unmuting');
   audio.playSound(true);
   assert.equal(audio.sources.length, 1, 'Fresh actions still play');
+});
+
+test('a tile drop waits for mobile audio to resume instead of discarding its sound', async t => {
+  const audio = await setup(t, { deferredResume: true });
+  audio.playSound(true);
+  assert.equal(audio.sources.length, 0);
+  await audio.finishResume();
+  assert.equal(audio.sources.length, 1, 'The first drop plays after audio unlocks');
+  audio.contexts[0].state = 'interrupted';
+  audio.playSound(true);
+  await audio.finishResume();
+  assert.equal(audio.sources.length, 2, 'Audio recovers after a phone interruption');
+});
+
+test('muting while mobile audio is resuming cancels the pending drop sound', async t => {
+  const audio = await setup(t, { deferredResume: true });
+  audio.playSound(true);
+  audio.toggle();
+  await audio.finishResume();
+  assert.equal(audio.sources.length, 0);
+  assert.ok(audio.media.paused && audio.media.muted);
 });
 
 test('saved mute remains silent through interactions, visibility changes and page restoration', async t => {
@@ -147,6 +172,22 @@ test('the first mute click works even when music autoplay is blocked', async t =
   assert.equal(audio.storage.get('word-pool:sound'), 'off');
   assert.equal(audio.sources.length, 0);
   assert.ok(audio.media.paused && audio.media.muted);
+});
+
+test('touch release toggles sound without a click, and a synthesized click does not toggle twice', async t => {
+  const audio = await setup(t);
+  const touch = () => audio.button.dispatchEvent(Object.assign(new Event('pointerup'), { pointerType: 'touch', isPrimary: true, button: 0 }));
+  const click = detail => audio.button.dispatchEvent(Object.assign(new Event('click'), { detail }));
+  touch();
+  assert.ok(audio.media.muted);
+  click(1);
+  assert.ok(audio.media.muted, 'A follow-up click must not unmute');
+  touch();
+  assert.ok(!audio.media.muted, 'Another touch can unmute immediately');
+  click(1);
+  assert.ok(!audio.media.muted);
+  click(0);
+  assert.ok(audio.media.muted, 'Keyboard and assistive activation still work');
 });
 
 test('mute works for the session when local storage is unavailable', async t => {

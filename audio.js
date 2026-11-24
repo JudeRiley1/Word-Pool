@@ -13,6 +13,8 @@ function stopEffects() {
 
 function getContext() {
   if (!context) {
+    // Keep effects in the same playback session as music on supported phones.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* Optional API. */ }
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (Audio) context = new Audio();
   }
@@ -44,9 +46,10 @@ function unlock() {
   if (!soundOn || document.hidden) return;
   try {
     const audio = getContext();
-    if (audio && audio.state !== 'running') void audio.resume().catch(() => {});
+    const resumed = audio && audio.state !== 'running' ? audio.resume().catch(() => {}) : undefined;
     void loadEffects();
     startMusic();
+    return resumed;
   } catch { /* Gameplay still works when audio is unavailable. */ }
 }
 
@@ -62,7 +65,7 @@ export function playSound(enabled, kind = 'move') {
   if (!enabled || !soundOn || document.hidden) return;
   const requestedAt = performance.now();
   const version = playbackVersion;
-  unlock();
+  const resumed = unlock();
   const play = sounds => {
     if (!sounds || !soundOn || version !== playbackVersion || document.hidden || context?.state !== 'running' || performance.now() - requestedAt > 500) return;
     try {
@@ -77,7 +80,8 @@ export function playSound(enabled, kind = 'move') {
       }
     } catch { /* Optional audio must never interrupt a move. */ }
   };
-  if (buffers) play(buffers); else void loadEffects().then(play);
+  if (buffers && context?.state === 'running') play(buffers);
+  else void Promise.all([resumed, loadEffects()]).then(([, sounds]) => play(sounds));
 }
 
 export function installAudio() {
@@ -97,18 +101,30 @@ export function installAudio() {
     button.title = soundOn ? 'Sound on' : 'Sound off';
   };
   updateButton();
-  button.addEventListener('click', () => {
+  const toggleSound = () => {
     soundOn = !soundOn;
     music.muted = !soundOn;
     try { localStorage.setItem('word-pool:sound', soundOn ? 'on' : 'off'); } catch { /* Keep session preference. */ }
     if (soundOn) unlock(); else { music.pause(); stopEffects(); }
     updateButton();
+  };
+  let touchToggleAt = -Infinity;
+  button.addEventListener('pointerup', event => {
+    if (!['touch', 'pen'].includes(event.pointerType) || !event.isPrimary || event.button !== 0) return;
+    touchToggleAt = performance.now();
+    toggleSound();
+  });
+  button.addEventListener('click', event => {
+    // A touch can also synthesize a click. Keyboard/assistive clicks still work.
+    if (event.detail !== 0 && performance.now() - touchToggleAt < 750) return;
+    toggleSound();
   });
   const gesture = event => { if (!event.target.closest?.('#music-toggle')) unlock(); };
-  document.addEventListener('pointerdown', gesture, { passive: true });
-  document.addEventListener('touchend', gesture, { passive: true });
-  document.addEventListener('click', gesture);
-  document.addEventListener('keydown', gesture);
+  // Touch activation can arrive on release, and dragging suppresses clicks.
+  // Capture the release before the board handles a drop or stops propagation.
+  for (const event of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) {
+    document.addEventListener(event, gesture, { passive: true, capture: true });
+  }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       music.pause();
