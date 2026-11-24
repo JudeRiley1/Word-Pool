@@ -152,6 +152,6 @@ export function stats(results, today) {
 }
 
 export function shareText(puzzle, state, url) {
-  return `Letter Relay ${puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`}\n${state.status === 'won' ? state.checks.length : 'X'}/${checkLimit(puzzle)} checks\n` +
+  return `Word Pool ${puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`}\n${state.status === 'won' ? state.checks.length : 'X'}/${checkLimit(puzzle)} checks\n` +
     [0, 1, 2, 3].map(row => state.checks.map(c => c.correct[row] ? '🟩' : '⬜').join('')).join('\n') + `\nPlay this relay: ${url}`;
 }

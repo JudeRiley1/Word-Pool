@@ -1,4 +1,6 @@
-# Letter Relay
+# Word Pool
+
+Previously Letter Relay. The repository, URL, and storage keys stay unchanged so existing links and saved games continue to work.
 
 A complete daily word puzzle in plain HTML, CSS and JavaScript. No dependencies, backend, account, or API keys. Local play runs directly from source; deployment versions the static assets to keep browser caches consistent. Four starting words become four clue answers by passing one original letter from each of the first three rows to the next row.
 
@@ -112,13 +114,15 @@ Ask five new players to open the game without an explanation. Record whether eac
 
 Poolside is the default presentation. The visible Poolside / Classic switch restores the original lavender theme at any time. Selection uses the separate `letter-relay:theme` storage key; puzzles, streaks, checks, sound preferences, and saved transfers are unchanged by switching. The original `styles.css` is retained; Poolside overrides live in `pool.css`. The Git tag `classic-before-poolside` preserves the complete previous release.
 
-The pool has a generated transparent platypus mascot, animated water and lanes, a gentle sip/bob cycle, and damped float physics with squash and ripples on collision. Drag or tap the mascot, or use its arrow-key controls. On phones, press **Tilt pool** while holding the phone comfortably. The first valid sensor reading becomes the neutral position. Sensor permission is requested only from that click when the browser requires it. Tilt is optional, requires a supported browser and HTTPS, and falls back to dragging when unavailable or denied. See [MDN device orientation](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static).
+The full viewport is a flat aqua pool with gently drifting illustrated water lines. A flat 2D platypus mascot floats throughout the background, passing behind the opaque game board, with subtle rotation and damped squash/ripples on collision. **Find pal** brings it back into view. Drag or tap the mascot, or use its arrow-key controls. On phones, press **Tilt pool** while holding the phone comfortably. The first valid sensor reading becomes the neutral position. Sensor permission is requested only from that click when the browser requires it. Tilt is optional, requires a supported browser and HTTPS, and falls back to dragging when unavailable or denied. See [MDN device orientation](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static).
 
-**Pause water** stops ambient motion and disables tilt. System reduced-motion preferences also disable decorative motion. The physics loop sleeps when offscreen, in a hidden tab, or in Classic. The mascot is bounded within its pool, separate from the puzzle's drag targets. A correct relay gives it a little victory bounce. Existing sound settings apply to the softer Poolside drop note.
+**Pause water** stops ambient motion and disables tilt. System reduced-motion preferences also disable decorative motion. The physics loop sleeps when offscreen, in a hidden tab, or in Classic. The mascot bounces off the viewport edges. The board stays above it and owns its own pointer events, so the mascot cannot cover letters or intercept puzzle drags. A correct relay gives it a little victory bounce. Existing sound settings apply to the softer Poolside drop note.
 
-The artwork and exact generation prompt are in `assets/platypus-pool.png` and `assets/platypus-pool-prompt.md`. Generated with the built-in image tool, with original transparency preserved.
+The current artwork and exact generation prompt are in `assets/platypus-flat.png` and `assets/platypus-flat-prompt.md`. The earlier 3D mascot remains in `assets/platypus-pool.png` as a backup. Generated with the built-in image tool, with original transparency preserved.
 
 Poolside validation includes physics tests for every wall, sustained tilt, rotation, resize, damping, and frame stalls. A headless browser checked 320px, 390px, and desktop layouts, artwork loading, theme persistence, pause, simulated orientation events, and reduced motion without controlling the owner's screen. Actual phone sensor sensitivity and the operating system's permission prompt still need a real-device check.
+
+The flat Word Pool revision also checks full-viewport bounds, mascot pointer layering behind the board, dragging the mascot outside the old pool area, letter transfer/return, and unchanged saved progress after theme changes. Letter contrast against tile surfaces exceeds 11:1; primary button text exceeds 8:1. The chosen name is displayed in the page title, branding, help, and spoiler-free shared results. The original repository URL and saved-game keys remain stable.
 
 ## Release cache
 

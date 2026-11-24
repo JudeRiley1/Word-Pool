@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { deliverShare } from '../sharing.js';
 
-const text = 'Letter Relay #001 · 1/6\n● ● ● ●\nhttps://example.org/';
+const text = 'Word Pool #001 · 1/6\n● ● ● ●\nhttps://example.org/';
 test('native sharing receives only the spoiler-free text', async () => {
   let received;
   const result = await deliverShare(text, { nativeShare: async input => { received = input; }, copyText: () => assert.fail('Native success must not copy') });

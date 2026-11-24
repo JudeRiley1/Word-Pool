@@ -5,6 +5,7 @@ export function installPool() {
   const pal = document.getElementById('pool-pal'), squish = pal.querySelector('.pal-squish');
   const tiltButton = document.getElementById('pool-tilt'), motionButton = document.getElementById('pool-motion');
   const status = document.getElementById('pool-status'), reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const icon = document.querySelector('link[rel="icon"]'), classicIcon = icon.href;
   let motion = !reduced.matches, visible = true, raf = 0, last = 0, elapsed = 0;
   let tilt = false, permissionPending = false, neutral = null, gravity = { x: 0, y: 0 }, sensorTimer = 0;
   let drag = null, suppressClick = false, squishAnimation, lastBump = 0;
@@ -17,8 +18,16 @@ export function installPool() {
   function resize() {
     if (!scene.clientWidth) return;
     bounds = { width: Math.max(0, scene.clientWidth - pal.offsetWidth - 16), height: Math.max(0, scene.clientHeight - pal.offsetHeight - 16) };
-    if (!placed) { state.x = bounds.width * .62; state.y = bounds.height * .45; placed = true; }
+    if (!placed) { home(); placed = true; }
     state.x = clamp(state.x, 0, bounds.width); state.y = clamp(state.y, 0, bounds.height); paint();
+  }
+  function home() {
+    const lounge = document.querySelector('.pool-lounge').getBoundingClientRect();
+    const startY = lounge.top >= 0 && lounge.top < scene.clientHeight - pal.offsetHeight ? lounge.top : 75;
+    state.x = scene.clientWidth < 720 ? bounds.width * .62 : Math.min(bounds.width, scene.clientWidth / 2 + 330);
+    state.y = clamp(startY, 0, bounds.height);
+    state.vx = 22; state.vy = 8;
+    paint();
   }
   function splash() {
     if (!moving()) return;
@@ -30,13 +39,15 @@ export function installPool() {
   function bump(axis = 'x', force = .12) {
     if (!moving()) return;
     squishAnimation?.cancel();
-    const amount = clamp(force, .07, .2);
+    const amount = clamp(force, .04, .12);
     const sx = axis === 'x' ? 1 - amount : 1 + amount, sy = axis === 'x' ? 1 + amount : 1 - amount;
     squishAnimation = squish.animate([{ transform: 'scale(1)' }, { transform: `scale(${sx},${sy})`, offset: .22 }, { transform: `scale(${2 - sx},${2 - sy})`, offset: .57 }, { transform: 'scale(1)' }], { duration: 510, easing: 'ease-out' });
     splash();
   }
   function tick(now) {
     raf = 0;
+    // Some browsers update matches before dispatching the preference change event.
+    if (reduced.matches && root.dataset.poolMotion !== 'off') { motion = false; stopTilt(); syncMotion(); return; }
     if (!moving()) { last = 0; return; }
     const dt = last ? Math.min((now - last) / 1000, .035) : 1 / 60; last = now; elapsed += dt;
     if (!drag) {
@@ -116,11 +127,13 @@ export function installPool() {
     root.dataset.theme = theme === 'classic' ? 'classic' : 'pool';
     try { localStorage.setItem('letter-relay:theme', root.dataset.theme); } catch { /* Theme selection still works for this visit. */ }
     document.querySelectorAll('[data-set-theme]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.setTheme === root.dataset.theme)));
-    document.querySelector('meta[name="theme-color"]').content = poolActive() ? '#bcecf0' : '#f3edff';
+    document.querySelector('meta[name="theme-color"]').content = poolActive() ? '#05b4c9' : '#f3edff';
+    icon.href = poolActive() ? './assets/pool-icon.svg' : classicIcon;
     if (!poolActive()) { endDrag(); stopTilt(); }
     resize(); syncMotion();
   }
   document.querySelectorAll('[data-set-theme]').forEach(button => button.addEventListener('click', () => setTheme(button.dataset.setTheme)));
+  document.getElementById('pool-recall').addEventListener('click', () => { endDrag(); resize(); home(); splash(); status.textContent = 'There you are'; });
   new ResizeObserver(resize).observe(scene);
   new IntersectionObserver(entries => { visible = entries[0].isIntersecting; syncMotion(); }).observe(scene);
   document.addEventListener('visibilitychange', () => { if (document.hidden) endDrag(); syncMotion(); });

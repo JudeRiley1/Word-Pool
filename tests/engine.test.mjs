@@ -110,7 +110,7 @@ test('share format contains checks and link, with no answers or clues', () => {
   state.board = solve(puzzle)[0];
   check(puzzle, state);
   const text = shareText(puzzle, state, 'https://example.org/letter-relay/');
-  assert.equal(text, 'Letter Relay #001\n1/6 checks\n🟩\n🟩\n🟩\n🟩\nPlay this relay: https://example.org/letter-relay/');
+  assert.equal(text, 'Word Pool #001\n1/6 checks\n🟩\n🟩\n🟩\n🟩\nPlay this relay: https://example.org/letter-relay/');
   for (const secret of [...puzzle.starts, ...puzzle.answers, ...puzzle.clues]) assert.ok(!text.includes(secret));
   state.status = 'lost';
   assert.match(shareText(puzzle, state, 'https://example.org/'), /X\/6/);

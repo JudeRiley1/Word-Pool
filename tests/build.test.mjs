@@ -24,6 +24,8 @@ test('deployment versions HTML assets and the entire module graph together', asy
     assert.ok(!(await readFile(join(output, 'app.js'), 'utf8')).includes('slot-line'));
     await readFile(join(output, 'assets/fonts/nunito-latin.woff2'));
     await readFile(join(output, 'assets/platypus-pool.png'));
+    await readFile(join(output, 'assets/platypus-flat.png'));
+    await readFile(join(output, 'assets/water-lines.svg'));
     assert.equal(await buildSite(output), version, 'Identical source produces the same version');
   } finally {
     assert.equal(dirname(resolve(output)), resolve(tmpdir()));
