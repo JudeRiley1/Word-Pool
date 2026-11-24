@@ -225,3 +225,48 @@ html:has(dialog[open]) { overflow:hidden; }
 
 [data-theme="pool"] footer .audio-credit { font-size:10px; line-height:1.6; font-weight:600; margin-top:10px; }
 .audio-credit a { color:inherit; text-underline-offset:2px; }
+
+/* Pool stats use the same cream cards, water colors and gold actions as play. */
+[data-theme="pool"] #stats-dialog { width:min(480px,calc(100% - 20px)); padding:22px; border:1px solid #bfd5d7; box-shadow:0 7px 0 #164e5a33,0 24px 60px #163e5033; }
+#stats-dialog::backdrop { background:#164e5a77; }
+#stats-dialog .compact-heading { padding-bottom:16px; border-bottom:1px solid #d9e4df; }
+.stats-kicker { display:block; margin-bottom:5px; color:#52717b; font-size:10px; font-weight:900; letter-spacing:1.4px; }
+#stats-dialog h2 { font-size:29px; }
+#stats-dialog .stats-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:18px 0 10px; }
+#stats-dialog .stat { padding:13px 4px 11px; border-radius:14px; background:#e0f1f3; }
+#stats-dialog .stat:nth-child(2) { background:#fae5b0; }
+#stats-dialog .stat strong { color:#164e5a; font-family:var(--heading); font-size:34px; line-height:1.05; font-variant-numeric:tabular-nums; }
+#stats-dialog .stat span { margin-top:6px; color:#316370; font-size:11px; font-weight:800; }
+.pool-streaks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.pool-streak { display:flex; flex-direction:column; gap:5px; padding:12px; border:1px solid #ded6c3; border-radius:13px; background:#f2eddf; }
+.pool-streak>span { color:#52717b; font-size:11px; font-weight:800; }
+.pool-streak strong { color:#164e5a; font-size:23px; line-height:1.1; font-variant-numeric:tabular-nums; }
+.pool-streak small { color:#52717b; font-size:12px; font-weight:700; }
+#stats-dialog .stats-empty { margin:12px 0 0; color:#52717b; font-size:12px; line-height:1.4; text-align:center; }
+.pool-chart { margin-top:20px; padding:15px; border:1px solid #bed8db; border-radius:15px; background:#fffdf7; }
+.pool-chart-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.pool-chart-heading h3 { margin:0; color:#164e5a; font-size:15px; font-weight:900; }
+.pool-chart-heading>span { color:#52717b; font-size:10px; font-weight:700; }
+#stats-dialog .histogram { display:grid; gap:10px; margin:14px 0 0; }
+#stats-dialog .bar-row { grid-template-columns:55px minmax(0,1fr) minmax(18px,max-content); gap:9px; margin:0; color:#316370; font-size:11px; font-weight:800; }
+#stats-dialog .bar-track { height:21px; background:#e0f1f3; border-radius:7px; overflow:hidden; }
+#stats-dialog .bar { height:100%; min-width:0; padding:0; border-radius:7px; background:#0b8fa6; }
+#stats-dialog .bar-row:first-child .bar { background:#35805c; }
+.bar-count { text-align:right; font-variant-numeric:tabular-nums; }
+#stats-dialog .stats-legacy { margin:10px 0 0; color:#52717b; font-size:10px; line-height:1.4; }
+#stats-dialog .stats-back { width:100%; margin-top:18px; min-height:44px; font-size:15px; padding:11px; }
+#stats-dialog :focus-visible { outline-color:#0b8fa6; }
+@media(max-width:359px) {
+  [data-theme="pool"] #stats-dialog { padding:14px; }
+  #stats-dialog h2 { font-size:26px; }
+  #stats-dialog .stat strong { font-size:29px; }
+  .pool-chart { padding:12px; margin-top:14px; }
+}
+@media(max-height:500px) and (min-width:540px) {
+  [data-theme="pool"] #stats-dialog { width:min(720px,calc(100% - 20px)); padding:12px 18px; }
+  #stats-dialog .compact-heading { padding-bottom:10px; }
+  #stats-content { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  #stats-dialog .stats-grid { margin-top:12px; }
+  .pool-chart { margin-top:12px; }
+  #stats-dialog .stats-back { margin-top:12px; }
+}

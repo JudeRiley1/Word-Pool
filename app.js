@@ -378,7 +378,15 @@ function renderStats() {
   data = readStore();
   const s = stats(data.results, today);
   const top = Math.max(1, ...s.distribution);
-  $('#stats-content').innerHTML = `<div class="stats-grid">${[[s.played, 'Played'], [s.wins, 'Won'], [s.played ? `${Math.round(s.wins / s.played * 100)}%` : '0%', 'Win rate'], [s.current, 'Current streak'], [s.best, 'Best streak']].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join('')}</div><h3 class="eyebrow">CHECKS TO THE FINISH</h3><div class="histogram">${s.distribution.map((n, i) => `<div class="bar-row" aria-label="${i + 1} checks: ${n} wins"><span>${i + 1}</span><div class="bar-track"><div class="bar${n ? '' : ' empty'}" style="width:${Math.max(8, n / top * 100)}%">${n}</div></div></div>`).join('')}</div>${s.played ? '' : '<p class="dialog-fineprint">Complete a daily relay to see your stats here.</p>'}`;
+  const legacyWins = s.distribution.slice(3).some(Boolean);
+  const distribution = s.distribution.slice(0, legacyWins ? 6 : 3);
+  $('#stats-content').innerHTML = `<div class="stats-summary">
+    <div class="stats-grid">${[[s.played, 'Played'], [s.wins, 'Pools cleared'], [s.played ? `${Math.round(s.wins / s.played * 100)}%` : '0%', 'Win rate']].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join('')}</div>
+    <div class="pool-streaks">${[[s.current, 'Current streak'], [s.best, 'Best streak']].map(([value, label]) => `<div class="pool-streak"><span>${label}</span><strong>${value}<small> ${value === 1 ? 'day' : 'days'}</small></strong></div>`).join('')}</div>
+    ${s.played ? '' : '<p class="stats-empty">Finish a daily puzzle to start your record.</p>'}
+    </div><section class="pool-chart" aria-labelledby="stats-chart-title"><div class="pool-chart-heading"><h3 id="stats-chart-title">Checks to clear</h3><span>Daily wins</span></div>
+    <div class="histogram">${distribution.map((n, i) => `<div class="bar-row" aria-label="${i + 1} ${i === 0 ? 'check' : 'checks'}: ${n} ${n === 1 ? 'win' : 'wins'}"><span class="bar-label" aria-hidden="true">${i + 1} ${i === 0 ? 'check' : 'checks'}</span><div class="bar-track" aria-hidden="true"><div class="bar" style="width:${n / top * 100}%"></div></div><strong class="bar-count" aria-hidden="true">${n}</strong></div>`).join('')}</div>
+    ${legacyWins ? '<p class="stats-legacy">Includes wins from the earlier six-check game.</p>' : ''}</section>`;
 }
 
 async function share() {

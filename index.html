@@ -88,7 +88,12 @@
     <p class="compact-note">Practice keeps your daily stats safe</p>
   </dialog>
 
-  <dialog id="stats-dialog" aria-labelledby="stats-title"><div class="dialog-top"><span class="eyebrow">YOUR DAILY RECORD</span><button class="close-button" data-close aria-label="Close statistics">×</button></div><h2 id="stats-title">Your stats</h2><div id="stats-content"></div><p class="dialog-fineprint">Daily results are saved in this browser</p></dialog>
+  <dialog id="stats-dialog" class="compact-dialog" aria-labelledby="stats-title">
+    <div class="compact-heading"><div><span class="stats-kicker">YOUR DAILY RECORD</span><h2 id="stats-title">Your pool stats</h2></div><button class="close-button" data-close aria-label="Close statistics">&times;</button></div>
+    <div id="stats-content"></div>
+    <button class="primary-button stats-back" data-close>Back to the pool</button>
+    <p class="compact-note">Daily puzzles only &middot; Saved in this browser</p>
+  </dialog>
 
   <dialog id="archive-dialog" class="compact-dialog" aria-labelledby="archive-title">
     <div class="compact-heading"><h2 id="archive-title">The pool archive</h2><button class="close-button" data-close aria-label="Close archive">&times;</button></div>
