@@ -1,5 +1,6 @@
 import { START_DATE, PUZZLES, PRACTICE } from './puzzles.js';
 import { MAX_CHECKS, DAY_MS, copy, newState, dayIndex, tokens, words, complete, move, undo, reset, check, restore, solve, stats, shareText } from './engine.js';
+import { deliverShare } from './sharing.js';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -204,14 +205,13 @@ async function share() {
   const url = new URL('./', window.location.href).href;
   let text = shareText(currentPuzzle(), currentState(), url);
   if (practicing) text = text.replace('#practice', '· Practice');
-  if (navigator.share) {
-    try { await navigator.share({ text }); announce('Result shared. A good handoff.'); return; }
-    catch (error) { if (error.name === 'AbortError') return; }
-  }
-  try {
-    await navigator.clipboard.writeText(text);
-    announce('Result copied. Ready to pass it on.');
-  } catch {
+  const delivery = await deliverShare(text, {
+    nativeShare: navigator.share?.bind(navigator),
+    copyText: navigator.clipboard?.writeText.bind(navigator.clipboard)
+  });
+  if (delivery === 'shared') announce('Result shared. A good handoff.');
+  if (delivery === 'copied') announce('Result copied. Ready to pass it on.');
+  if (delivery === 'selectable') {
     $('#share-text').value = text;
     openDialog('#share-dialog');
     $('#share-text').select();

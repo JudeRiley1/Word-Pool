@@ -35,7 +35,7 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(39px, 5.2v
 .row-number { font-size: 10px; letter-spacing: 1px; color: #7a837a; font-weight: bold; }
 .starting-word { color: var(--muted); font-size: 11px; letter-spacing: 1.2px; }
 .tile-line { display: flex; gap: 6px; align-items: center; min-height: 46px; }
-.tile { width: 43px; height: 46px; flex: 0 0 43px; border: 1px solid #ced4c8; border-bottom-width: 3px; border-radius: 6px; background: #f9faf5; display: grid; place-items: center; padding: 0; font-size: 24px; font-weight: 500; font-family: Georgia, 'Times New Roman', serif; transition: transform .14s, background .14s, border-color .14s; position: relative; }
+.tile { width: 44px; height: 46px; flex: 0 0 44px; border: 1px solid #ced4c8; border-bottom-width: 3px; border-radius: 6px; background: #f9faf5; display: grid; place-items: center; padding: 0; font-size: 24px; font-weight: 500; font-family: Georgia, 'Times New Roman', serif; transition: transform .14s, background .14s, border-color .14s; position: relative; }
 button.tile:hover { border-color: var(--green); background: #eff3e9; transform: translateY(-2px); }
 .tile.received { background: var(--soft-green); border-color: #799989; color: #204b3e; }
 .tile.received::after { content: ''; position: absolute; bottom: 4px; width: 10px; height: 2px; border-radius: 2px; background: var(--green); }
@@ -127,16 +127,15 @@ dialog > .primary-button { width: 100%; margin-top: 20px; }
 .skip-link:focus { top: 10px; }
 @keyframes arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 .tile.received { animation: arrive .22s ease both; }
-@media (min-width: 1000px) and (min-height: 900px) { .intro { padding-top: 48px; padding-bottom: 38px; } .puzzle-row { padding-top: 25px; padding-bottom: 25px; } }
 @media (max-width: 680px) {
   .shell { padding: 0 20px; }
-  .masthead { padding: 18px 0; }
+  .masthead { padding: 10px 0; }
   .brand { font-size: 22px; gap: 8px; }
   .brand-mark { width: 33px; height: 35px; }
   nav { gap: 14px; }
   .nav-button { font-size: 12px; gap: 5px; }
-  .intro { padding: 28px 0 25px; }
-  h1 { font-size: 42px; }
+  .intro { padding: 22px 0; }
+  h1 { font-size: 38px; }
   .puzzle-row { grid-template-columns: 1fr; padding: 16px 18px 19px; gap: 9px; }
   .row-word { display: contents; }
   .row-meta { margin: 0; grid-row: 1; padding-right: 20px; }
@@ -150,7 +149,7 @@ dialog > .primary-button { width: 100%; margin-top: 20px; }
   .insertion { grid-row: 4; margin-top: 1px; }
   .slot-line { gap: 4px; }
   .slot { min-width: 0; }
-  .game-controls { gap: 8px 10px; }
+  .game-controls { gap: 5px 10px; position: sticky; bottom: 0; z-index: 3; background: var(--paper); padding: 8px 0 max(10px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
   #check { min-width: 0; padding: 12px 20px; gap: 12px; }
   .secondary-controls { gap: 14px; }
   .check-counter { gap: 7px; font-size: 10px; }

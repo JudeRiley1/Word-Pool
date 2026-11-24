@@ -6,6 +6,8 @@ A complete daily word puzzle in plain HTML, CSS and JavaScript. No dependencies,
 
 Install Node.js 22 or newer, then run:
 
+On Windows, you can also double-click **`Start Letter Relay.cmd`** to start the server and open the game. Keep its terminal window open while playing.
+
 ```sh
 npm start
 ```
@@ -65,9 +67,14 @@ Sharing uses native Web Share when available, then the clipboard, then a selecta
 - `styles.css` — responsive layout, focus states and reduced-motion support
 - `app.js` — browser controls, persistence, daily rollover, statistics and sharing
 - `engine.js` — pure rules, solver, restoration, scoring and statistics
+- `sharing.js` — native share, clipboard and selectable-text fallback handling
 - `puzzles.js` — the only puzzle content and schedule file
 - `tests/engine.test.mjs` — built-in Node tests; no packages needed
 - `scripts/validate.mjs` — exhaustive puzzle validation
 - `.github/workflows/pages.yml` — GitHub Pages test-and-publish workflow
 
 Because this is a static client-side game, puzzle data is visible in source. The interface and shared results keep answers hidden until the game ends; this is not an anti-cheat system.
+
+## Verification
+
+The 45 automated tests cover all 31 puzzles in all six transfer orders, repeated-letter identity, incoming-letter protection, undo/reset, duplicate checks, six-check losses, serialized progress restoration, UTC boundaries, schedule exhaustion, statistics, and all sharing fallback branches. The puzzle validator also passes for every launch puzzle and practice. Desktop rendering and bottom-up transfers were exercised in Edge. Real-device mobile touch behavior and the native phone share sheet still need device verification; these are not claimed as completed browser tests.

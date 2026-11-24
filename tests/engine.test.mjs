@@ -69,8 +69,9 @@ test('six distinct unsuccessful checks end and restore a loss', () => {
   const state = newState();
   move(PRACTICE, state, 1, 1, 0);
   move(PRACTICE, state, 2, 1, 0);
+  const arrangements = [[0, 0], [0, 1], [0, 3], [0, 4], [1, 0], [1, 1]];
   for (let i = 0; i < 6; i++) {
-    move(PRACTICE, state, 0, i < 5 ? 0 : 1, i % 5);
+    move(PRACTICE, state, 0, ...arrangements[i]);
     assert.equal(check(PRACTICE, state).kind, i === 5 ? 'lost' : 'playing');
   }
   assert.equal(state.checks.length, 6);
