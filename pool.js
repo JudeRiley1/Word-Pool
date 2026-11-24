@@ -9,7 +9,14 @@ export function installPool() {
   const hint = text => { motionHint.textContent = text; motionHint.hidden = !text; };
   let sensorTimeout;
   const wake = document.createElement('div'); wake.className = 'swim-wake'; wake.setAttribute('aria-hidden', 'true');
-  wake.innerHTML = '<i></i><i></i><i></i>'; scene.prepend(wake);
+  scene.prepend(wake);
+  let rippleIndex = 0;
+  const ripplePaths = [
+    ['M58 16C35 10 18 27 21 45', 'M23 61C28 80 48 86 67 78'],
+    ['M49 14C28 17 18 32 23 49', 'M25 64C38 82 57 81 70 73'],
+    ['M62 20C42 9 22 22 20 39', 'M19 55C23 74 40 85 60 81']
+  ];
+  const rippleArt = () => `<svg viewBox="0 0 100 100" aria-hidden="true">${ripplePaths[rippleIndex++ % ripplePaths.length].map(d => `<path d="${d}"/>`).join('')}</svg>`;
   let motion = !reduced.matches, visible = true, raf = 0, last = 0, elapsed = 0;
   let sensors = false, permissionPending = false, askedPermission = false, neutral = null, calibratingUntil = 0, sensorAt = 0;
   let targetGravity = { x: 0, y: 0 }, smoothGravity = { x: 0, y: 0 }, lastTrail = 0;
@@ -21,17 +28,18 @@ export function installPool() {
     const shape = wakeShape(state.vx, state.vy, pal.offsetWidth);
     wake.style.transform = `translate(${state.x + pal.offsetWidth / 2 + 8}px,${state.y + pal.offsetHeight / 2 + 8}px) rotate(${shape.angle}deg)`;
     wake.style.setProperty('--wake-length', `${shape.length}px`);
-    wake.style.opacity = moving() ? String(shape.strength * .7) : '0';
+    wake.style.opacity = moving() ? String(shape.strength * .3) : '0';
     const now = performance.now();
-    if (moving() && shape.strength > .15 && now - lastTrail > 180 && scene.querySelectorAll('.wake-trail').length < 10) {
+    if (moving() && shape.strength > .15 && now - lastTrail > 270 && scene.querySelectorAll('.wake-trail').length < 10) {
       lastTrail = now;
-      const trail = document.createElement('span'); trail.className = 'wake-trail';
+      const trail = document.createElement('span'); trail.className = 'wake-trail'; trail.setAttribute('aria-hidden', 'true'); trail.innerHTML = rippleArt();
       const radians = shape.angle * Math.PI / 180, offset = pal.offsetWidth * .27;
       trail.style.left = `${state.x + pal.offsetWidth / 2 + 8 - Math.cos(radians) * offset}px`;
       trail.style.top = `${state.y + pal.offsetHeight / 2 + 8 - Math.sin(radians) * offset}px`;
-      trail.style.setProperty('--trail-angle', `${shape.angle}deg`);
-      trail.style.setProperty('--trail-size', `${pal.offsetWidth * .55}px`);
-      scene.prepend(trail); setTimeout(() => trail.remove(), 1250);
+      trail.style.setProperty('--trail-angle', `${shape.angle + Math.sin(rippleIndex * 2.4) * 9}deg`);
+      trail.style.setProperty('--trail-size', `${pal.offsetWidth * (.7 + (rippleIndex % 3) * .06)}px`);
+      trail.style.setProperty('--trail-strength', String(.12 + shape.strength * .16));
+      scene.prepend(trail); setTimeout(() => trail.remove(), 1750);
     }
   }
   function recenter() { neutral = null; targetGravity = smoothGravity = { x: 0, y: 0 }; state.vx = state.vy = 0; calibratingUntil = performance.now() + 450; }
@@ -79,10 +87,11 @@ export function installPool() {
   }
   function splash() {
     if (!moving()) return;
-    const ripple = document.createElement('span'); ripple.className = 'pool-ripple';
+    const ripple = document.createElement('span'); ripple.className = 'pool-ripple'; ripple.setAttribute('aria-hidden', 'true'); ripple.innerHTML = rippleArt();
+    ripple.style.setProperty('--trail-size', `${pal.offsetWidth * .85}px`);
     ripple.style.left = `${state.x + pal.offsetWidth / 2 + 8}px`; ripple.style.top = `${state.y + pal.offsetHeight / 2 + 8}px`;
     scene.append(ripple); ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
-    setTimeout(() => ripple.remove(), 1200);
+    setTimeout(() => ripple.remove(), 1850);
   }
   function bump(axis = 'x', force = .12) {
     if (!moving()) return;
