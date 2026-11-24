@@ -222,3 +222,6 @@ html:has(dialog[open]) { overflow:hidden; }
   #help-dialog .quick-controls div { padding:5px 8px; }
   #help-dialog .help-actions button { min-height:40px; padding:6px 12px; }
 }
+
+[data-theme="pool"] footer .audio-credit { font-size:10px; line-height:1.6; font-weight:600; margin-top:10px; }
+.audio-credit a { color:inherit; text-underline-offset:2px; }
