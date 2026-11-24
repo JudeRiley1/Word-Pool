@@ -157,6 +157,8 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 .nav-button.music-toggle svg { display:block; width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .music-slash { display:none; }
 .music-toggle[aria-pressed="false"] .music-slash { display:block; }
+[data-theme="pool"] .nav-button.icon-nav { display:grid; place-items:center; width:44px; height:44px; padding:0; }
+[data-theme="pool"] .nav-button.icon-nav svg { display:block; width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 
 /* Single-screen help and a paged archive keep controls in reach. */
 html:has(dialog[open]) { overflow:hidden; }
