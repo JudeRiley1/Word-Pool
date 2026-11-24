@@ -157,7 +157,10 @@ export function stats(results, today) {
 }
 
 export function shareText(puzzle, state, url) {
-  const result = state.rulesVersion === 1 ? `Previous rules · ${state.checks.length} checks` : `Score: ${score(state)}/3\n${state.status === 'won' ? `${livesRemaining(state)} ${livesRemaining(state) === 1 ? 'life' : 'lives'} saved` : 'Out of lives'}`;
-  return `Word Pool ${puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`}\n${result}\n` +
-    [0, 1, 2, 3].map(row => state.checks.map(c => c.correct[row] ? '🟩' : '⬜').join('')).join('\n') + `\nPlay Word Pool: ${url}`;
+  const label = puzzle.id === 'practice' ? '· Practice' : puzzle.kind === 'hard' ? `· Hard #${String(puzzle.id).split('-').at(-1).padStart(3, '0')}` : puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`;
+  const won = state.status === 'won';
+  const result = state.rulesVersion === 1 ? `${won ? 'Pool cleared' : 'Round finished'} · Previous rules · ${state.checks.length} checks` : `${won ? 'Pool cleared' : 'Out of lives'} · Score: ${score(state)}/3\n${'💙'.repeat(score(state))}${'🤍'.repeat(3 - score(state))}`;
+  // Each line is one check, with one square for each of the four clues.
+  const grid = state.checks.map(c => c.correct.map(hit => hit ? '🟩' : '⬜').join('')).join('\n');
+  return `🌊 Word Pool ${label}\n${result}\n\n${grid}\n\nYour turn to dive in\n${url}`;
 }

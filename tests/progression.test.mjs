@@ -46,9 +46,9 @@ test('weekly postcards roll over and past collections remain accessible', () => 
   assert.equal(postcard({ 0: { status: 'won' } }, 7, 0)[0].earned, true);
   assert.equal(puzzleDate(START_DATE, 89).toISOString(), '2027-02-21T00:00:00.000Z');
 });
-test('four-row share grid records each row across attempts without revealing words', () => {
+test('share grid uses one line per check and four clues per line without revealing words', () => {
   const state = { status: 'won', checks: [{ correct: [true,false,true,false] }, { correct: [true,true,true,true] }] };
   const text = shareText(PUZZLES[0], state, 'https://example.org/?puzzle=1');
-  assert.ok(text.includes('🟩🟩\n⬜🟩\n🟩🟩\n⬜🟩'));
+  assert.ok(text.includes('\u{1F7E9}\u2b1c\u{1F7E9}\u2b1c\n\u{1F7E9}\u{1F7E9}\u{1F7E9}\u{1F7E9}'));
   for (const word of [...PUZZLES[0].starts, ...PUZZLES[0].answers]) assert.ok(!text.includes(word));
 });

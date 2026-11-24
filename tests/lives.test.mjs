@@ -19,7 +19,7 @@ test('only incorrect distinct checks cost lives; the third check can win with on
   assert.equal(check(PRACTICE, state).kind, 'won');
   assert.equal(livesRemaining(state), 1); assert.equal(score(state), 1);
   assert.deepEqual(restore(PRACTICE, JSON.parse(JSON.stringify(state))), state);
-  assert.match(shareText(PRACTICE, state, 'https://example.org/game'), /Score: 1\/3\n1 life saved/);
+  assert.match(shareText(PRACTICE, state, 'https://example.org/game'), /Score: 1\/3\n\u{1F499}\u{1F90D}\u{1F90D}/u);
 });
 test('undo, reset and reload never refund lives; loss scores zero and locks moves', () => {
   const state = newState(); wrong(state, 0); reset(state); undo(state);

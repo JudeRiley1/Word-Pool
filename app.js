@@ -133,7 +133,7 @@ function renderResult(puzzle, state) {
   const challengeDay = archivePuzzle ? archiveIndex : today;
   const nextChallenge = !practicing && puzzle.kind !== 'hard' && challengeDay !== null ? CHALLENGES[challengeDay] : null;
   const hardSaved = nextChallenge && data.archive?.[nextChallenge.id];
-  result.innerHTML = `${won ? '<div class="delivery-stamp">Pool cleared</div>' : ''}<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><div class="finish-stats"><span><strong>${state.rulesVersion === 1 ? state.checks.length : `${score(state)}/3`}</strong> ${state.rulesVersion === 1 ? 'checks under previous rules' : 'score'}</span>${!practicing && !archivePuzzle ? `<span><strong>${stats(data.results, today).current}</strong> day streak</span>` : '<span>Daily streak<br>stays unchanged</span>'}</div><div class="share-preview" aria-label="Your spoiler-free result">${state.checks[0].correct.map((_, row) => `<div>${state.checks.map(c => `<span class="share-cell ${c.correct[row] ? 'hit' : 'miss'}" aria-label="${c.correct[row] ? 'Matched' : 'Unmatched'}"></span>`).join('')}</div>`).join('')}</div><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
+  result.innerHTML = `${won ? '<div class="delivery-stamp">Pool cleared</div>' : ''}<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><div class="finish-stats"><span><strong>${state.rulesVersion === 1 ? state.checks.length : `${score(state)}/3`}</strong> ${state.rulesVersion === 1 ? 'checks under previous rules' : 'score'}</span>${!practicing && !archivePuzzle ? `<span><strong>${stats(data.results, today).current}</strong> day streak</span>` : '<span>Daily streak<br>stays unchanged</span>'}</div><div class="share-preview" aria-label="Your spoiler-free result">${state.checks.map(c => `<div>${c.correct.map(hit => `<span class="share-cell ${hit ? 'hit' : 'miss'}" aria-label="${hit ? 'Matched' : 'Unmatched'}"></span>`).join('')}</div>`).join('')}</div><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
     ${!won ? `<ol class="transfer-summary">${solution.map((m, row) => `<li><strong>${puzzle.starts[row][m.index]}</strong> from ${puzzle.starts[row]} to ${puzzle.starts[row + 1]} → ${puzzle.answers[row + 1]}</li>`).join('')}</ol>` : ''}
     <button class="primary-button" id="share-result">Share result <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="10" r="2"/><circle cx="15" cy="4" r="2"/><circle cx="15" cy="16" r="2"/><path d="m7 9 6-4M7 11l6 4"/></svg></button>
     ${nextChallenge ? `<div class="hard-invite"><h3>Up for a harder relay?</h3><p>Longer words, three lives, a new puzzle</p><button class="primary-button challenge-button" id="try-hard">${hardSaved ? hardSaved.status === 'playing' ? 'Continue the hard relay' : 'View hard relay result' : challengeDay === today ? 'Try today’s hard relay' : 'Try the hard relay'}</button><small>Your daily streak is safe</small></div>` : ''}
@@ -361,8 +361,7 @@ function renderStats() {
 
 async function share() {
   const url = practicing ? new URL('./', location.href).href : puzzleLink(location.href, currentPuzzle().id);
-  let text = shareText(currentPuzzle(), currentState(), url);
-  if (practicing) text = text.replace('#practice', '· Practice');
+  const text = shareText(currentPuzzle(), currentState(), url);
   const delivery = await deliverShare(text, {
     nativeShare: navigator.share?.bind(navigator),
     copyText: navigator.clipboard?.writeText.bind(navigator.clipboard)
