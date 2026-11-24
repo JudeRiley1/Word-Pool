@@ -80,7 +80,7 @@ export function installPool() {
   function home() {
     const lounge = document.querySelector('.pool-lounge').getBoundingClientRect();
     const startY = lounge.top >= 0 && lounge.top < scene.clientHeight - pal.offsetHeight ? lounge.top : 75;
-    state.x = scene.clientWidth < 720 ? bounds.width * .62 : Math.min(bounds.width, scene.clientWidth / 2 + 330);
+    state.x = scene.clientWidth < 720 ? bounds.width * .9 : Math.min(bounds.width, scene.clientWidth / 2 + 330);
     state.y = clamp(startY, 0, bounds.height);
     state.vx = touchPhone ? 0 : 22; state.vy = touchPhone ? 0 : 8;
     paint();
