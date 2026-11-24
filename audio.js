@@ -1,8 +1,15 @@
-// Recorded water and licensed beach music; see assets/audio/CREDITS.txt.
+// Water effects and licensed beach music; see assets/audio/CREDITS.txt.
 const asset = name => new URL(`./assets/audio/${name}`, import.meta.url).href;
-let context, music, musicOn = true, blocked = false, updateButton = () => {};
-let effectsLoading, buffers, moveCount = 0;
+let context, music, soundOn = true, updateButton = () => {};
+let effectsLoading, buffers, moveCount = 0, playbackVersion = 0;
 const activeSplashes = new Set();
+
+function stopEffects() {
+  // Invalidate pending decodes as well as active and scheduled splashes.
+  playbackVersion++;
+  for (const source of activeSplashes) { try { source.stop(); } catch { /* Already stopped. */ } }
+  activeSplashes.clear();
+}
 
 function getContext() {
   if (!context) {
@@ -16,7 +23,7 @@ function loadEffects() {
   if (effectsLoading) return effectsLoading;
   const audio = getContext();
   if (!audio) return Promise.resolve(null);
-  effectsLoading = Promise.all(['splash-soft.mp3', 'splash-full.mp3'].map(async name => {
+  effectsLoading = Promise.all(['water-plop.mp3', 'water-splash.mp3'].map(async name => {
     const response = await fetch(asset(name));
     if (!response.ok) throw new Error('Splash unavailable');
     return audio.decodeAudioData(await response.arrayBuffer());
@@ -25,20 +32,16 @@ function loadEffects() {
 }
 
 function startMusic() {
-  if (!music || !musicOn || document.hidden) return;
+  if (!music || !soundOn || document.hidden) return;
   // Call play directly inside gestures, without awaiting network or decoding.
   // Browsers that permit autoplay start on load; others retry on the first tap.
   music.play().then(() => {
-    blocked = false;
-    if (!musicOn || document.hidden) music.pause();
-    updateButton();
-  }).catch(error => {
-    if (error.name === 'NotAllowedError') blocked = true;
-    updateButton();
-  });
+    if (!soundOn || document.hidden) music.pause();
+  }).catch(() => { /* Retry on the next gesture if autoplay is blocked. */ });
 }
 
 function unlock() {
+  if (!soundOn || document.hidden) return;
   try {
     const audio = getContext();
     if (audio && audio.state !== 'running') void audio.resume().catch(() => {});
@@ -56,11 +59,12 @@ function splash(buffer, volume, rate, delay = 0) {
 }
 
 export function playSound(enabled, kind = 'move') {
-  if (!enabled || document.hidden) return;
+  if (!enabled || !soundOn || document.hidden) return;
   const requestedAt = performance.now();
+  const version = playbackVersion;
   unlock();
   const play = sounds => {
-    if (!sounds || document.hidden || context?.state !== 'running' || performance.now() - requestedAt > 500) return;
+    if (!sounds || !soundOn || version !== playbackVersion || document.hidden || context?.state !== 'running' || performance.now() - requestedAt > 500) return;
     try {
       if (kind === true || kind === 'win') {
         splash(sounds[1], .8, 1);
@@ -78,24 +82,26 @@ export function playSound(enabled, kind = 'move') {
 
 export function installAudio() {
   const button = document.getElementById('music-toggle');
-  try { musicOn = localStorage.getItem('word-pool:music') !== 'off'; } catch { /* Defaults on. */ }
+  try {
+    // Carry the existing music mute preference over to the unified control.
+    soundOn = (localStorage.getItem('word-pool:sound') ?? localStorage.getItem('word-pool:music')) !== 'off';
+  } catch { /* Defaults on. */ }
   music = new Audio(asset('beachfront-celebration.mp3'));
   music.id = 'pool-music'; music.hidden = true; music.setAttribute('aria-hidden', 'true');
-  music.preload = 'auto'; music.loop = true; music.autoplay = musicOn;
+  music.preload = 'auto'; music.loop = true; music.autoplay = soundOn; music.muted = !soundOn;
   // The file itself is mixed quietly, including on iPhones that ignore volume.
   music.volume = 1; document.body.append(music);
   updateButton = () => {
-    const playing = musicOn && !blocked;
-    button.setAttribute('aria-pressed', String(playing));
-    button.setAttribute('aria-label', playing ? 'Mute background music' : 'Play background music');
-    button.title = blocked && musicOn ? 'Tap to start music' : musicOn ? 'Music on' : 'Music off';
+    button.setAttribute('aria-pressed', String(soundOn));
+    button.setAttribute('aria-label', soundOn ? 'Mute all sound' : 'Unmute all sound');
+    button.title = soundOn ? 'Sound on' : 'Sound off';
   };
   updateButton();
   button.addEventListener('click', () => {
-    if (blocked && musicOn) { unlock(); return; }
-    musicOn = !musicOn; blocked = false;
-    try { localStorage.setItem('word-pool:music', musicOn ? 'on' : 'off'); } catch { /* Keep session preference. */ }
-    if (musicOn) unlock(); else music.pause();
+    soundOn = !soundOn;
+    music.muted = !soundOn;
+    try { localStorage.setItem('word-pool:sound', soundOn ? 'on' : 'off'); } catch { /* Keep session preference. */ }
+    if (soundOn) unlock(); else { music.pause(); stopEffects(); }
     updateButton();
   });
   const gesture = event => { if (!event.target.closest?.('#music-toggle')) unlock(); };
@@ -106,11 +112,11 @@ export function installAudio() {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       music.pause();
-      for (const source of activeSplashes) { try { source.stop(); } catch { /* Already stopped. */ } }
+      stopEffects();
       if (context) void context.suspend().catch(() => {});
     } else unlock();
   });
-  window.addEventListener('pagehide', () => music.pause());
+  window.addEventListener('pagehide', () => { music.pause(); stopEffects(); });
   window.addEventListener('pageshow', startMusic);
   void loadEffects();
   startMusic();
