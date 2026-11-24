@@ -29,7 +29,6 @@ h1 { font-family: var(--heading); font-size: clamp(44px, 6vw, 66px); font-weight
 h1 span { color: #4e348b; }
 .post-pal { width: 90px; height: 77px; flex: 0 0 90px; transform: rotate(5deg); animation: hello .65s cubic-bezier(.2, .8, .3, 1.3) both; }
 .dek { font-size: 18px; font-weight: 800; margin: 5px 0 0; color: #72569c; }
-.intro-rule { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
 #game { border: 2px solid #ded0f1; border-radius: 28px; padding: 20px 22px 16px; background: #fff; box-shadow: 0 7px 0 #dfd1f1, 0 12px 28px #5c3d8720; }
 .board-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 16px; font-size: 12px; color: #6c528f; font-weight: 900; letter-spacing: .6px; }
 .delivery-progress { border-radius: 20px; background: #f0e9fb; padding: 6px 11px; color: #72569c; font-size: 12px; font-weight: 800; letter-spacing: 0; white-space: nowrap; }
@@ -56,8 +55,6 @@ button.tile:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--row-b
 .sent-edit { position: relative; padding: 0 5px; margin: -13px -5px; min-height: 44px; background: none; border: 0; color: #634390; font-size: 12px; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
 .sent-edit:hover { color: var(--purple-dark); }
 .sent-edit.selected { color: var(--purple-dark); text-decoration-thickness: 2px; }
-.flow { position: absolute; left: calc(50% - 14px); bottom: -23px; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid #d6c6ed; background: #fff; border-radius: 10px; color: #a18abd; font-size: 19px; line-height: 1; font-weight: 900; z-index: 2; }
-.flow.done { background: #bdeccf; border-color: #91c6a4; color: #35754b; }
 .insertion { padding-top: 12px; margin-top: 11px; border-top: 2px dashed var(--row-border); animation: arrive .18s ease-out both; }
 .insertion p { font-size: 14px; margin: 0 0 8px; color: var(--purple-dark); text-align: center; }
 .slot-line { display: flex; justify-content: center; gap: 6px; max-width: 390px; margin: 0 auto; }
@@ -91,18 +88,12 @@ button.tile:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--row-b
 .message:empty { display: none; }
 footer { padding: 20px 0 24px; text-align: center; color: #8a75a4; }
 footer p { margin: 0 0 5px; font-size: 14px; font-weight: 800; }
-footer p span { color: #a885cf; }
-footer > span { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
 .practice-banner { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 13px 17px; border: 2px solid #cdb8e9; border-radius: 18px; background: #e9dcff; margin-bottom: 16px; font-size: 14px; }
 .text-button { padding: 0 7px; min-height: 44px; border: 0; background: none; font-size: 14px; font-weight: 900; color: var(--purple-dark); text-decoration: underline; text-underline-offset: 3px; }
 .result { position: relative; margin-top: 21px; padding: 24px 20px; border: 2px solid #d7c2f0; border-radius: 23px; text-align: center; background: #f4ecff; overflow: hidden; animation: arrive .4s ease-out both; }
 .result h2 { font-size: 36px; }
 .result p { font-size: 16px; line-height: 1.5; color: #725a87; }
 .result .primary-button { margin: 20px auto 12px; }
-.celebration { display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 10px; font-size: 30px; color: #9f6fe0; }
-.celebration span:nth-child(2) { font-size: 44px; color: #edb83d; text-shadow: 0 3px 0 #db9b24; }
-.celebration span { animation: hooray .6s cubic-bezier(.2, .8, .3, 1.4) both; }
-.celebration span:last-child { animation-delay: .1s; }
 h2 { margin: 12px 0; color: #654297; font-family: var(--heading); font-size: 34px; line-height: 1.1; font-weight: 500; letter-spacing: -.5px; }
 .eyebrow { color: #7d5aa6; font-size: 12px; font-weight: 900; letter-spacing: 1px; }
 .solution-words { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin: 17px 0; }
@@ -147,14 +138,12 @@ dialog > .primary-button { width: 100%; margin-top: 20px; }
 .skip-link:focus { top: 10px; }
 @keyframes arrive { from { opacity: .35; transform: translateY(-7px) scale(.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes hello { from { opacity: 0; transform: translateX(25px) rotate(18deg); } to { opacity: 1; transform: translateX(0) rotate(5deg); } }
-@keyframes hooray { from { opacity: 0; transform: scale(.2) rotate(-30deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 @media (min-width: 720px) {
   .puzzle-row { padding: 12px 17px 15px; }
   .row-heading { position: absolute; inset: 14px auto auto 15px; max-width: 195px; align-items: flex-start; }
   .row-word { padding-left: 195px; }
   .tile-line { gap: 6px; }
   .tile { width: 49px; height: 51px; flex-basis: 49px; }
-  .flow { left: 28px; }
 }
 @media (max-width: 719px) {
   .shell { padding: 0 15px; }
@@ -168,7 +157,6 @@ dialog > .primary-button { width: 100%; margin-top: 20px; }
   h1 { font-size: 48px; }
   .post-pal { width: 68px; height: 63px; flex-basis: 68px; }
   .dek { font-size: 16px; margin-top: 0; }
-  .intro-rule { font-size: 13px; }
   #game { padding: 16px 13px 12px; border-radius: 24px; }
   .board-header { margin-bottom: 13px; font-size: 11px; letter-spacing: .2px; }
   .delivery-progress { font-size: 11px; padding: 5px 9px; }

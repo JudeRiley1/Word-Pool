@@ -86,7 +86,7 @@ function render() {
     return `<section class="puzzle-row${feedback?.correct[row] ? ' matched' : ''}" aria-label="Row ${row + 1}: ${esc(puzzle.clues[row])}">
       <div class="row-heading"><span class="row-number" aria-hidden="true">${row + 1}</span><div class="clue-block"><p class="clue">${esc(puzzle.clues[row])}</p>${feedback ? `<span class="row-status${feedback.correct[row] ? ' correct' : ''}">${feedback.correct[row] ? '✓ Clue matched!' : '○ Try another delivery'}</span>` : ''}</div></div>
       <div class="row-word"><div class="tile-line">${tileHTML}</div><div class="row-meta"><span class="starting-word">From ${start}</span>${outgoing ? ended ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : `<button class="sent-edit${selection?.row === row ? ' selected' : ''}" data-action="letter" data-row="${row}" data-index="${outgoing.index}" data-focus="sent-${row}" aria-label="Reposition ${start[outgoing.index]} sent from row ${row + 1}">${start[outgoing.index]} sent · edit</button>` : ''}</div></div>
-      ${slots}${row < 3 ? `<span class="flow${outgoing ? ' done' : ''}" aria-hidden="true">↓</span>` : ''}</section>`;
+      ${slots}</section>`;
   }).join('');
   $('#undo').disabled = ended || !state.undo.length;
   $('#reset').disabled = ended || state.board.every(m => !m);
@@ -94,7 +94,7 @@ function render() {
   $('#check').innerHTML = ended ? state.status === 'won' ? 'Relay complete <span aria-hidden="true">✓</span>' : 'Relay finished' : 'Check relay <span aria-hidden="true">✓</span>';
   $('#checks-label').textContent = `${state.checks.length} of ${MAX_CHECKS} checks used`;
   $('#check-dots').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}">${i < state.checks.length ? '✓' : i + 1}</span>`).join('');
-  $('#instruction').textContent = ended ? 'That’s a wrap! Come back for your next delivery.' : selection ? `Pick a + slot in row ${selection.row + 2}. Escape cancels.` : complete(state) ? 'All letters delivered. Let’s check those clues!' : 'Tap a letter. Then pick a + slot in the next row.';
+  $('#instruction').textContent = ended ? 'Relay finished' : selection ? `Choose a + slot in row ${selection.row + 2} (Esc to cancel)` : complete(state) ? 'Ready to check your words?' : 'Choose a letter, then tap a + slot in the next row';
   renderResult(puzzle, state);
   if (active) focusKey(active);
 }
@@ -105,7 +105,7 @@ function renderResult(puzzle, state) {
   if (result.hidden) { result.innerHTML = ''; return; }
   const won = state.status === 'won';
   const solution = solve(puzzle)[0];
-  result.innerHTML = `${won ? '<div class="celebration" aria-hidden="true"><span>✦</span><span>★</span><span>✦</span></div>' : ''}<span class="eyebrow">${won ? 'SIGNED, SEALED, SOLVED!' : 'ONE FOR THE MAILBAG'}</span><h2 id="result-title">${won ? 'You delivered!' : 'Nice try, word explorer.'}</h2><p>${won ? `Four happy words, all in <strong>${state.checks.length} ${state.checks.length === 1 ? 'check' : 'checks'}</strong>.` : 'Six checks used. Here’s the route these letters took.'}</p><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
+  result.innerHTML = `<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><p>${won ? `Completed in <strong>${state.checks.length} ${state.checks.length === 1 ? 'check' : 'checks'}</strong>` : 'You’ve used all six checks'}</p><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
     ${!won ? `<ol class="transfer-summary">${solution.map((m, row) => `<li><strong>${puzzle.starts[row][m.index]}</strong> from ${puzzle.starts[row]} to ${puzzle.starts[row + 1]} → ${puzzle.answers[row + 1]}</li>`).join('')}</ol>` : ''}
     <button class="primary-button" id="share-result">Share result <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="10" r="2"/><circle cx="15" cy="4" r="2"/><circle cx="15" cy="16" r="2"/><path d="m7 9 6-4M7 11l6 4"/></svg></button>
     ${practicing ? '<button class="text-button" id="replay-practice">Play practice again</button>' : '<p>Next daily relay<span id="countdown" class="countdown"></span><span id="next-note"></span></p>'}`;
@@ -160,11 +160,11 @@ $('#reset').addEventListener('click', () => {
 $('#check').addEventListener('click', () => {
   selection = null;
   const outcome = check(currentPuzzle(), currentState());
-  if (outcome.kind === 'duplicate') { announce('You’ve already checked this arrangement. No check used. Try a different handoff.'); return; }
+  if (outcome.kind === 'duplicate') { announce('Try a different arrangement; this one was already checked and won’t use another check.'); return; }
   if (outcome.kind === 'incomplete') return;
   persist();
   render();
-  announce(outcome.kind === 'won' ? 'Relay complete! All four clues matched.' : outcome.kind === 'lost' ? 'All six checks used. The solution is shown below.' : `${outcome.correct.filter(Boolean).length} of 4 clues matched. Keep going—you can change any transfer.`);
+  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? 'All six checks used; the solution is shown below.' : `${outcome.correct.filter(Boolean).length} of 4 clues matched; you can change any transfer.`);
   if (currentState().status !== 'playing') $('#share-result').focus({ preventScroll: false });
 });
 
@@ -200,7 +200,7 @@ function renderStats() {
   data = readStore();
   const s = stats(data.results, today);
   const top = Math.max(1, ...s.distribution);
-  $('#stats-content').innerHTML = `<div class="stats-grid">${[[s.played, 'Played'], [s.wins, 'Won'], [s.played ? `${Math.round(s.wins / s.played * 100)}%` : '—', 'Win rate'], [s.current, 'Current streak'], [s.best, 'Best streak']].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join('')}</div><h3 class="eyebrow">CHECKS TO THE FINISH</h3><div class="histogram">${s.distribution.map((n, i) => `<div class="bar-row" aria-label="${i + 1} checks: ${n} wins"><span>${i + 1}</span><div class="bar-track"><div class="bar${n ? '' : ' empty'}" style="width:${Math.max(8, n / top * 100)}%">${n}</div></div></div>`).join('')}</div>${s.played ? '' : '<p class="dialog-fineprint">Your first daily relay starts the story.</p>'}`;
+  $('#stats-content').innerHTML = `<div class="stats-grid">${[[s.played, 'Played'], [s.wins, 'Won'], [s.played ? `${Math.round(s.wins / s.played * 100)}%` : '0%', 'Win rate'], [s.current, 'Current streak'], [s.best, 'Best streak']].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join('')}</div><h3 class="eyebrow">CHECKS TO THE FINISH</h3><div class="histogram">${s.distribution.map((n, i) => `<div class="bar-row" aria-label="${i + 1} checks: ${n} wins"><span>${i + 1}</span><div class="bar-track"><div class="bar${n ? '' : ' empty'}" style="width:${Math.max(8, n / top * 100)}%">${n}</div></div></div>`).join('')}</div>${s.played ? '' : '<p class="dialog-fineprint">Complete a daily relay to see your stats here.</p>'}`;
 }
 
 async function share() {
