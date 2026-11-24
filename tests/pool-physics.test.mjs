@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stepFloat, tiltVector } from '../pool-physics.js';
+import { stepFloat, tiltVector, wakeShape } from '../pool-physics.js';
 
 test('float reflects from every wall without escaping or gaining collision energy', () => {
   for (const [x, y, vx, vy, axis] of [[0, 30, -150, 0, 'x'], [100, 30, 150, 0, 'x'], [40, 0, 0, -150, 'y'], [40, 60, 0, 150, 'y']]) {
@@ -32,7 +32,27 @@ test('tilt calibrates the held angle, handles portrait and landscape and rejects
   assert.ok(Math.abs(reverse.x + 1) < 1e-6);
   assert.equal(tiltVector(null, null, neutral), null);
   assert.equal(tiltVector(NaN, 0, neutral), null);
-  assert.ok(Math.abs(tiltVector(-179, 0, { beta: 179, gamma: 0 }).y - 2 / 28) < 1e-6);
+  assert.equal(tiltVector(-179, 0, { beta: 179, gamma: 0 }).y, 0);
+});
+
+test('comfortable phone angles stay neutral, tremors are ignored, and deliberate tilt eases in', () => {
+  for (const beta of [25, 45, 65, 80]) {
+    const neutral = { beta, gamma: -7 };
+    const jitter = tiltVector(beta + 2, -9, neutral);
+    assert.ok(Math.abs(jitter.x) === 0 && Math.abs(jitter.y) === 0);
+    const gentle = tiltVector(beta + 8, -7, neutral);
+    const firm = tiltVector(beta + 20, -7, neutral);
+    assert.ok(gentle.y > 0 && gentle.y < .2 && firm.y > gentle.y && firm.y < 1);
+  }
+});
+
+test('wake follows velocity, grows with speed and disappears when still', () => {
+  assert.equal(wakeShape(0, 0, 120).strength, 0);
+  assert.equal(wakeShape(100, 0, 120).angle, 0);
+  assert.equal(wakeShape(0, 100, 120).angle, 90);
+  assert.equal(Math.abs(wakeShape(-100, 0, 120).angle), 180);
+  assert.ok(wakeShape(150, 0, 120).length > wakeShape(20, 0, 120).length);
+  assert.ok(wakeShape(150, 0, 120).strength > wakeShape(20, 0, 120).strength);
 });
 
 test('drag release slows naturally and background time never causes a large teleport', () => {

@@ -1,19 +1,60 @@
-import { clamp, stepFloat, tiltVector } from './pool-physics.js';
+import { clamp, stepFloat, tiltVector, wakeShape } from './pool-physics.js';
 
 export function installPool() {
   const root = document.documentElement, scene = document.getElementById('pool-scene');
   const pal = document.getElementById('pool-pal'), squish = pal.querySelector('.pal-squish');
-  const tiltButton = document.getElementById('pool-tilt'), motionButton = document.getElementById('pool-motion');
-  const status = document.getElementById('pool-status'), reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const icon = document.querySelector('link[rel="icon"]'), classicIcon = icon.href;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const wake = document.createElement('div'); wake.className = 'swim-wake'; wake.setAttribute('aria-hidden', 'true');
+  wake.innerHTML = '<i></i><i></i><i></i>'; scene.prepend(wake);
   let motion = !reduced.matches, visible = true, raf = 0, last = 0, elapsed = 0;
-  let tilt = false, permissionPending = false, neutral = null, gravity = { x: 0, y: 0 }, sensorTimer = 0;
+  let sensors = false, permissionPending = false, askedPermission = false, neutral = null, calibratingUntil = 0, sensorAt = 0;
+  let targetGravity = { x: 0, y: 0 }, smoothGravity = { x: 0, y: 0 }, lastTrail = 0;
   let drag = null, suppressClick = false, squishAnimation, lastBump = 0;
   let bounds = { width: 0, height: 0 }, state = { x: 0, y: 0, vx: 28, vy: 12 }, placed = false;
-  const poolActive = () => root.dataset.theme === 'pool';
-  const moving = () => motion && !reduced.matches && poolActive() && visible && !document.hidden;
+  const moving = () => motion && !reduced.matches && visible && !document.hidden;
   function paint() {
     pal.style.transform = `translate3d(${state.x}px,${state.y}px,0) rotate(${motion && !reduced.matches ? clamp(state.vx / 18, -9, 9) : 0}deg)`;
+    const shape = wakeShape(state.vx, state.vy, pal.offsetWidth);
+    wake.style.transform = `translate(${state.x + pal.offsetWidth / 2 + 8}px,${state.y + pal.offsetHeight / 2 + 8}px) rotate(${shape.angle}deg)`;
+    wake.style.setProperty('--wake-length', `${shape.length}px`);
+    wake.style.opacity = moving() ? String(shape.strength * .7) : '0';
+    const now = performance.now();
+    if (moving() && shape.strength > .15 && now - lastTrail > 180 && scene.querySelectorAll('.wake-trail').length < 10) {
+      lastTrail = now;
+      const trail = document.createElement('span'); trail.className = 'wake-trail';
+      const radians = shape.angle * Math.PI / 180, offset = pal.offsetWidth * .27;
+      trail.style.left = `${state.x + pal.offsetWidth / 2 + 8 - Math.cos(radians) * offset}px`;
+      trail.style.top = `${state.y + pal.offsetHeight / 2 + 8 - Math.sin(radians) * offset}px`;
+      trail.style.setProperty('--trail-angle', `${shape.angle}deg`);
+      trail.style.setProperty('--trail-size', `${pal.offsetWidth * .55}px`);
+      scene.prepend(trail); setTimeout(() => trail.remove(), 1250);
+    }
+  }
+  function recenter() { neutral = null; targetGravity = smoothGravity = { x: 0, y: 0 }; calibratingUntil = performance.now() + 450; }
+  function orientation(event) {
+    if (!moving() || ![event.beta, event.gamma].every(Number.isFinite)) return;
+    sensorAt = performance.now();
+    if (!neutral) { neutral = { beta: event.beta, gamma: event.gamma }; calibratingUntil = sensorAt + 450; }
+    if (sensorAt < calibratingUntil) {
+      const delta = value => ((value + 540) % 360) - 180;
+      neutral.beta += delta(event.beta - neutral.beta) * .2; neutral.gamma += delta(event.gamma - neutral.gamma) * .2;
+      return;
+    }
+    targetGravity = tiltVector(event.beta, event.gamma, neutral, screen.orientation?.angle ?? window.orientation ?? 0);
+  }
+  function listenToTilt() {
+    if (sensors) return;
+    sensors = true; recenter(); window.addEventListener('deviceorientation', orientation, { passive: true });
+  }
+  async function requestTilt() {
+    if (reduced.matches || permissionPending || !window.isSecureContext || !window.DeviceOrientationEvent) return;
+    if (sensors) { recenter(); return; }
+    if (askedPermission) return;
+    askedPermission = true; permissionPending = true;
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission !== 'function' || await DeviceOrientationEvent.requestPermission() === 'granted') listenToTilt();
+    } catch { /* Drift and dragging remain available without sensors. */ }
+    finally { permissionPending = false; }
   }
   function resize() {
     if (!scene.clientWidth) return;
@@ -47,11 +88,14 @@ export function installPool() {
   function tick(now) {
     raf = 0;
     // Some browsers update matches before dispatching the preference change event.
-    if (reduced.matches && root.dataset.poolMotion !== 'off') { motion = false; stopTilt(); syncMotion(); return; }
+    if (reduced.matches && root.dataset.poolMotion !== 'off') { motion = false; syncMotion(); return; }
     if (!moving()) { last = 0; return; }
     const dt = last ? Math.min((now - last) / 1000, .035) : 1 / 60; last = now; elapsed += dt;
     if (!drag) {
-      const drift = tilt && neutral ? gravity : { x: Math.sin(elapsed * .47) * .18, y: Math.cos(elapsed * .61) * .13 };
+      const hasTilt = sensors && neutral;
+      const blend = 1 - Math.exp(-dt / .18);
+      smoothGravity = { x: smoothGravity.x + (targetGravity.x - smoothGravity.x) * blend, y: smoothGravity.y + (targetGravity.y - smoothGravity.y) * blend };
+      const drift = hasTilt ? smoothGravity : { x: Math.sin(elapsed * .47) * .18, y: Math.cos(elapsed * .61) * .13 };
       state = stepFloat(state, drift, bounds, dt);
       if (state.impact > 18 && now - lastBump > 170) { bump(state.hitX ? 'x' : 'y', state.impact / 900); lastBump = now; }
       paint();
@@ -60,43 +104,10 @@ export function installPool() {
   }
   function syncMotion() {
     root.dataset.poolMotion = motion && !reduced.matches ? 'on' : 'off';
-    motionButton.textContent = motion && !reduced.matches ? 'Pause water' : 'Resume water';
-    motionButton.setAttribute('aria-pressed', String(motion && !reduced.matches));
-    motionButton.disabled = reduced.matches;
-    tiltButton.disabled = reduced.matches || permissionPending;
-    if (reduced.matches) status.textContent = 'Reduced motion is on';
     cancelAnimationFrame(raf); raf = 0; last = 0;
     if (moving()) raf = requestAnimationFrame(tick);
-    else { squishAnimation?.cancel(); paint(); }
+    else { squishAnimation?.cancel(); scene.querySelectorAll('.wake-trail').forEach(el => el.remove()); paint(); }
   }
-  function stopTilt(message) {
-    tilt = false; neutral = null; gravity = { x: 0, y: 0 }; clearTimeout(sensorTimer);
-    window.removeEventListener('deviceorientation', orientation);
-    tiltButton.textContent = 'Tilt pool'; tiltButton.setAttribute('aria-pressed', 'false');
-    if (message) status.textContent = message;
-  }
-  function orientation(event) {
-    if (!tilt || !poolActive() || ![event.beta, event.gamma].every(Number.isFinite)) return;
-    if (!neutral) { neutral = { beta: event.beta, gamma: event.gamma }; clearTimeout(sensorTimer); status.textContent = 'Tilt your phone to float'; }
-    gravity = tiltVector(event.beta, event.gamma, neutral, screen.orientation?.angle ?? window.orientation ?? 0);
-  }
-  tiltButton.addEventListener('click', async () => {
-    if (tilt) { stopTilt('Just floating'); return; }
-    if (permissionPending || reduced.matches) return;
-    if (!window.isSecureContext || !window.DeviceOrientationEvent) { status.textContent = 'No tilt here. Drag or tap your pal'; return; }
-    permissionPending = true; tiltButton.disabled = true;
-    try {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function' && await DeviceOrientationEvent.requestPermission() !== 'granted') { status.textContent = 'Tilt not enabled. You can still drag your pal'; return; }
-      if (!poolActive() || reduced.matches) return;
-      tilt = true; motion = true; neutral = null;
-      tiltButton.textContent = 'Tilt off'; tiltButton.setAttribute('aria-pressed', 'true');
-      status.textContent = 'Hold comfortably to center the floaty';
-      window.addEventListener('deviceorientation', orientation, { passive: true });
-      sensorTimer = setTimeout(() => { if (!neutral) stopTilt('No tilt signal. Try dragging your pal'); }, 4000);
-    } catch { status.textContent = 'Tilt unavailable. Drag or tap your pal'; }
-    finally { permissionPending = false; syncMotion(); }
-  });
-  motionButton.addEventListener('click', () => { motion = !motion; if (!motion) stopTilt('Pool paused'); else status.textContent = 'Just floating'; syncMotion(); });
   function endDrag(event) {
     if (!drag || (event && event.pointerId !== drag.id)) return;
     const id = drag.id; suppressClick = drag.moved; drag = null;
@@ -121,30 +132,21 @@ export function installPool() {
   });
   pal.addEventListener('pointerup', endDrag); pal.addEventListener('pointercancel', event => { state.vx = state.vy = 0; endDrag(event); });
   pal.addEventListener('lostpointercapture', endDrag);
-  pal.addEventListener('click', () => { if (suppressClick || !moving()) return; state.vx = state.x > bounds.width / 2 ? -170 : 170; state.vy = state.y > bounds.height / 2 ? -100 : 100; bump('y'); });
+  pal.addEventListener('click', () => { if (suppressClick || !moving()) return; requestTilt(); state.vx = state.x > bounds.width / 2 ? -120 : 120; state.vy = state.y > bounds.height / 2 ? -70 : 70; bump('y'); });
   pal.addEventListener('keydown', event => { if (!moving()) return; const keys = { ArrowLeft: [-150, 0], ArrowRight: [150, 0], ArrowUp: [0, -150], ArrowDown: [0, 150] }; if (keys[event.key]) { event.preventDefault(); [state.vx, state.vy] = keys[event.key]; splash(); } });
-  function setTheme(theme) {
-    root.dataset.theme = theme === 'classic' ? 'classic' : 'pool';
-    try { localStorage.setItem('letter-relay:theme', root.dataset.theme); } catch { /* Theme selection still works for this visit. */ }
-    document.querySelectorAll('[data-set-theme]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.setTheme === root.dataset.theme)));
-    document.querySelector('meta[name="theme-color"]').content = poolActive() ? '#05b4c9' : '#f3edff';
-    icon.href = poolActive() ? './assets/pool-icon.svg' : classicIcon;
-    if (!poolActive()) { endDrag(); stopTilt(); }
-    resize(); syncMotion();
-  }
-  document.querySelectorAll('[data-set-theme]').forEach(button => button.addEventListener('click', () => setTheme(button.dataset.setTheme)));
-  document.getElementById('pool-recall').addEventListener('click', () => { endDrag(); resize(); home(); splash(); status.textContent = 'There you are'; });
   new ResizeObserver(resize).observe(scene);
   new IntersectionObserver(entries => { visible = entries[0].isIntersecting; syncMotion(); }).observe(scene);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) endDrag(); syncMotion(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) endDrag(); else recenter(); syncMotion(); });
   window.addEventListener('blur', () => endDrag());
-  screen.orientation?.addEventListener('change', () => { neutral = null; gravity = { x: 0, y: 0 }; });
-  reduced.addEventListener('change', () => { motion = !reduced.matches; if (!motion) stopTilt(); syncMotion(); });
+  reduced.addEventListener('change', () => { motion = !reduced.matches; syncMotion(); });
+  screen.orientation?.addEventListener('change', recenter);
+  window.addEventListener('orientationchange', recenter);
   let previousStatus = document.getElementById('game').dataset.status;
   new MutationObserver(() => {
     const next = document.getElementById('game').dataset.status;
-    if (next === 'won' && previousStatus === 'playing' && moving()) { state.vx = -180; state.vy = -100; bump('y', .2); status.textContent = 'A victory lap for your pool pal'; }
+    if (next === 'won' && previousStatus === 'playing' && moving()) { state.vx = -180; state.vy = -100; bump('y', .2); }
     previousStatus = next;
   }).observe(document.getElementById('game'), { attributes: true, attributeFilter: ['data-status'] });
-  setTheme(root.dataset.theme); resize();
+  resize(); syncMotion();
+  if (window.isSecureContext && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') listenToTilt();
 }

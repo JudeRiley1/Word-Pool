@@ -33,7 +33,7 @@ let collectionWeek = Math.floor(Math.max(0, today) / 7);
 let preferences;
 try { preferences = JSON.parse(localStorage.getItem('letter-relay:preferences')) || {}; } catch { preferences = {}; }
 if (typeof preferences !== 'object' || Array.isArray(preferences)) preferences = {};
-preferences.sound ??= false;
+preferences.sound = true;
 let revealing = false;
 let revealTimer;
 let selection = null;
@@ -112,10 +112,10 @@ function render() {
   $('#undo').disabled = ended || revealing || !state.undo.length;
   $('#reset').disabled = ended || revealing || state.board.every(m => !m);
   $('#check').disabled = ended || revealing || !complete(state);
-  $('#check').innerHTML = ended ? state.status === 'won' ? 'Relay complete <span aria-hidden="true">✓</span>' : 'Relay finished' : 'Check relay <span aria-hidden="true">✓</span>';
-  $('#checks-label').textContent = `${state.checks.length} of ${checkLimit(puzzle)} checks used`;
-  $('#check-dots').innerHTML = Array.from({ length: checkLimit(puzzle) }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}">${i < state.checks.length ? '✓' : i + 1}</span>`).join('');
-  $('#instruction').textContent = ended ? 'Relay finished' : selection?.keyboard ? `Left / Right to choose a spot, Enter to drop${selection.received ? ', Backspace to return' : ''}, Esc to cancel` : selection?.received ? `Move within row ${selection.row + 2}, or return to row ${selection.row + 1}` : selection ? `Drag into row ${selection.row + 2} and release at the marker` : complete(state) ? 'Ready to check your words?' : 'Drag a letter into the word below';
+  $('#check').textContent = ended ? state.status === 'won' ? 'Puzzle complete' : 'Puzzle finished' : 'Check words';
+  const remaining = checkLimit(puzzle) - state.checks.length;
+  $('#checks-label').textContent = ended ? `${state.checks.length}/${checkLimit(puzzle)} checks used` : `${remaining} ${remaining === 1 ? 'check' : 'checks'} left`;
+  $('#instruction').textContent = ended ? 'All done for this round' : selection?.keyboard ? `Left / Right to choose a spot, Enter to drop${selection.received ? ', Backspace to return' : ''}, Esc to cancel` : selection?.received ? `Move within row ${selection.row + 2}, or return to row ${selection.row + 1}` : selection ? `Drag into row ${selection.row + 2} and release at the marker` : complete(state) ? 'Ready to check your words?' : 'Drag letters into the next word';
   renderResult(puzzle, state);
   if (active) focusKey(active);
 }
@@ -454,14 +454,6 @@ function renderPostcard() {
 }
 $('#previous-week').addEventListener('click', () => { collectionWeek--; renderPostcard(); });
 $('#next-week').addEventListener('click', () => { collectionWeek++; renderPostcard(); });
-
-for (const option of ['sound']) {
-  $(`#${option}-setting`).checked = preferences[option];
-  $(`#${option}-setting`).addEventListener('change', event => {
-    preferences[option] = event.target.checked; savePreferences();
-    if (option === 'sound') playSound(preferences.sound);
-  });
-}
 
 const tutorial = installTutorial({
   done: () => { preferences.tutorial = true; savePreferences(); },
