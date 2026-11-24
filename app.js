@@ -1,5 +1,5 @@
 import { START_DATE, PUZZLES, PRACTICE, BONUSES, CHALLENGES } from './puzzles.js';
-import { checkLimit, DAY_MS, newState, dayIndex, tokens, words, complete, move, recall, undo, reset, check, restore, solve, stats, shareText, letterFeedback } from './engine.js';
+import { livesRemaining, score, DAY_MS, newState, dayIndex, tokens, words, complete, move, recall, undo, reset, check, restore, solve, stats, shareText, letterFeedback } from './engine.js';
 import { deliverShare } from './sharing.js';
 import { puzzleDate, resolvePuzzleLink, puzzleLink, postcard, saveProgress, insertionGap } from './progression.js';
 import { captureTiles, animateHandoff, playSound, installDrag } from './effects.js';
@@ -71,7 +71,7 @@ function render() {
   $('#puzzle-date').textContent = archivePuzzle && archiveIndex === null ? 'BONUS COLLECTION' : dateLabel(puzzleDate(START_DATE, archivePuzzle ? archiveIndex : today)).toUpperCase();
   $('#practice-banner').hidden = !practicing && !archivePuzzle;
   $('#mode-label').textContent = practicing ? 'Practice relay' : archivePuzzle?.title || `Archive relay #${puzzle?.id}`;
-  $('#mode-note').textContent = puzzle?.kind === 'hard' ? 'Longer words · Four checks · Separate stats' : 'Separate from your daily stats';
+  $('#mode-note').textContent = puzzle?.kind === 'hard' ? 'Longer words · Three lives · Separate stats' : 'Separate from your daily stats';
   $('#theme-label').textContent = puzzle?.theme ? `${puzzle.theme} edition` : '';
   $('#theme-label').hidden = !puzzle?.theme;
   renderPostcard();
@@ -113,8 +113,9 @@ function render() {
   $('#reset').disabled = ended || revealing || state.board.every(m => !m);
   $('#check').disabled = ended || revealing || !complete(state);
   $('#check').textContent = ended ? state.status === 'won' ? 'Puzzle complete' : 'Puzzle finished' : 'Check words';
-  const remaining = checkLimit(puzzle) - state.checks.length;
-  $('#checks-label').textContent = ended ? `${state.checks.length}/${checkLimit(puzzle)} checks used` : `${remaining} ${remaining === 1 ? 'check' : 'checks'} left`;
+  const remaining = livesRemaining(state);
+  $('#checks-label').innerHTML = state.rulesVersion === 1 && ended ? 'Previous rules' : `<span class="life-hearts" aria-hidden="true">${'&#9829;'.repeat(remaining)}<span class="spent-lives">${'&#9829;'.repeat(3 - remaining)}</span></span><span class="life-label">${remaining} ${remaining === 1 ? 'life' : 'lives'}</span>`;
+  $('#checks-label').setAttribute('aria-label', state.rulesVersion === 1 && ended ? 'Completed under previous rules' : `${remaining} of 3 lives left`);
   $('#instruction').textContent = ended ? 'All done for this round' : selection?.keyboard ? `Left / Right to choose a spot, Enter to drop${selection.received ? ', Backspace to return' : ''}, Esc to cancel` : selection?.received ? `Move within row ${selection.row + 2}, or return to row ${selection.row + 1}` : selection ? `Drag into row ${selection.row + 2} and release at the marker` : complete(state) ? 'Ready to check your words?' : 'Drag letters into the next word';
   renderResult(puzzle, state);
   if (active) focusKey(active);
@@ -130,11 +131,11 @@ function renderResult(puzzle, state) {
   const challengeDay = archivePuzzle ? archiveIndex : today;
   const nextChallenge = !practicing && puzzle.kind !== 'hard' && challengeDay !== null ? CHALLENGES[challengeDay] : null;
   const hardSaved = nextChallenge && data.archive?.[nextChallenge.id];
-  result.innerHTML = `${won ? '<div class="delivery-stamp">Delivered</div>' : ''}<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><div class="finish-stats"><span><strong>${state.checks.length}/${checkLimit(puzzle)}</strong> checks used</span>${!practicing && !archivePuzzle ? `<span><strong>${stats(data.results, today).current}</strong> day streak</span>` : '<span>Daily streak<br>stays unchanged</span>'}</div><div class="share-preview" aria-label="Your spoiler-free result">${state.checks[0].correct.map((_, row) => `<div>${state.checks.map(c => `<span class="share-cell ${c.correct[row] ? 'hit' : 'miss'}" aria-label="${c.correct[row] ? 'Matched' : 'Unmatched'}"></span>`).join('')}</div>`).join('')}</div><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
+  result.innerHTML = `${won ? '<div class="delivery-stamp">Delivered</div>' : ''}<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><div class="finish-stats"><span><strong>${state.rulesVersion === 1 ? state.checks.length : `${score(state)}/3`}</strong> ${state.rulesVersion === 1 ? 'checks under previous rules' : 'score'}</span>${!practicing && !archivePuzzle ? `<span><strong>${stats(data.results, today).current}</strong> day streak</span>` : '<span>Daily streak<br>stays unchanged</span>'}</div><div class="share-preview" aria-label="Your spoiler-free result">${state.checks[0].correct.map((_, row) => `<div>${state.checks.map(c => `<span class="share-cell ${c.correct[row] ? 'hit' : 'miss'}" aria-label="${c.correct[row] ? 'Matched' : 'Unmatched'}"></span>`).join('')}</div>`).join('')}</div><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
     ${!won ? `<ol class="transfer-summary">${solution.map((m, row) => `<li><strong>${puzzle.starts[row][m.index]}</strong> from ${puzzle.starts[row]} to ${puzzle.starts[row + 1]} → ${puzzle.answers[row + 1]}</li>`).join('')}</ol>` : ''}
     <button class="primary-button" id="share-result">Share result <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="10" r="2"/><circle cx="15" cy="4" r="2"/><circle cx="15" cy="16" r="2"/><path d="m7 9 6-4M7 11l6 4"/></svg></button>
-    ${nextChallenge ? `<div class="hard-invite"><h3>Up for a harder relay?</h3><p>Longer words, four checks, a new puzzle</p><button class="primary-button challenge-button" id="try-hard">${hardSaved ? hardSaved.status === 'playing' ? 'Continue the hard relay' : 'View hard relay result' : challengeDay === today ? 'Try today’s hard relay' : 'Try the hard relay'}</button><small>Your daily streak is safe</small></div>` : ''}
-    ${practicing ? '<button class="text-button" id="replay-practice">Play practice again</button>' : archivePuzzle ? '<button class="text-button" id="more-archive">Choose another relay</button>' : '<p class="earned-note">Today’s stamp is on your postcard</p><button class="text-button" id="more-archive">Play the archive</button><p>Next daily relay<span id="countdown" class="countdown"></span><span id="next-note"></span></p>'}`;
+    ${nextChallenge ? `<div class="hard-invite"><h3>Up for a harder relay?</h3><p>Longer words, three lives, a new puzzle</p><button class="primary-button challenge-button" id="try-hard">${hardSaved ? hardSaved.status === 'playing' ? 'Continue the hard relay' : 'View hard relay result' : challengeDay === today ? 'Try today’s hard relay' : 'Try the hard relay'}</button><small>Your daily streak is safe</small></div>` : ''}
+    ${practicing ? '<button class="text-button" id="replay-practice">Play practice again</button>' : archivePuzzle ? '<button class="text-button" id="more-archive">Choose another relay</button>' : '<p class="earned-note">Today’s visit is on your Pool Pass</p><button class="text-button" id="more-archive">Play the archive</button><p>Next daily relay<span id="countdown" class="countdown"></span><span id="next-note"></span></p>'}`;
   $('#share-result').addEventListener('click', share);
   $('#try-hard')?.addEventListener('click', () => openPuzzle(nextChallenge, challengeDay));
   $('#more-archive')?.addEventListener('click', openArchive);
@@ -282,15 +283,15 @@ document.addEventListener('keydown', event => {
 function stateHasOutgoing(row, index) { return currentState().board[row]?.index === index; }
 
 $('#undo').addEventListener('click', () => {
-  if (undo(currentState())) { selection = null; persist(); render(); announce('Last move undone. Checks already used are kept.'); }
+  if (undo(currentState())) { selection = null; persist(); render(); announce('Last move undone. Lives already lost stay used.'); }
 });
 $('#reset').addEventListener('click', () => {
-  if (reset(currentState())) { selection = null; persist(); render(); announce('Board reset. Checks already used are kept.'); }
+  if (reset(currentState())) { selection = null; persist(); render(); announce('Board reset. Lives already lost stay used.'); }
 });
 $('#check').addEventListener('click', () => {
   selection = null;
   const outcome = check(currentPuzzle(), currentState());
-  if (outcome.kind === 'duplicate') { announce('Try a different arrangement; this one was already checked and won’t use another check.'); return; }
+  if (outcome.kind === 'duplicate') { announce('Try a different arrangement; this one was already checked and will not cost another life.'); return; }
   if (outcome.kind === 'incomplete') return;
   persist();
   revealing = true;
@@ -313,7 +314,7 @@ $('#check').addEventListener('click', () => {
       $('#share-result')?.focus({ preventScroll: true });
     }
   }, 850);
-  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? `All ${checkLimit(currentPuzzle())} checks used; the solution is shown below.` : `${outcome.correct.filter(Boolean).length} of 4 clues matched; you can change any transfer.`);
+  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? `All three lives used; the solution is shown below.` : `${outcome.correct.filter(Boolean).length} of 4 clues matched. One life lost; ${livesRemaining(currentState())} left.`);
 });
 
 function openDialog(id) { $(id).showModal(); }
@@ -447,8 +448,8 @@ $('#archive-list').addEventListener('click', event => {
 function renderPostcard() {
   const stamps = postcard(data.results, today, collectionWeek);
   $('#postcard-dates').textContent = `${dateLabel(puzzleDate(START_DATE, stamps[0].day))} to ${dateLabel(puzzleDate(START_DATE, stamps[6].day))}`;
-  $('#stamp-count').textContent = `${stamps.filter(s => s.earned).length} of 7 collected`;
-  $('#stamps').innerHTML = stamps.map(s => `<div class="postage ${s.earned ? 'earned' : ''}${s.day === today ? ' today' : ''}" aria-label="${dateLabel(puzzleDate(START_DATE, s.day))}: ${s.earned ? 'stamp earned' : s.future ? 'upcoming' : 'not collected'}"><span aria-hidden="true">${s.earned ? '✉' : String(puzzleDate(START_DATE, s.day).getUTCDate())}</span><small>${new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(puzzleDate(START_DATE, s.day))}</small></div>`).join('');
+  $('#stamp-count').textContent = `${stamps.filter(s => s.earned).length} of 7 visits`;
+  $('#stamps').innerHTML = stamps.map(s => `<div class="postage ${s.earned ? 'earned' : ''}${s.day === today ? ' today' : ''}" aria-label="${dateLabel(puzzleDate(START_DATE, s.day))}: ${s.earned ? 'visit earned' : s.future ? 'upcoming' : 'not collected'}"><span aria-hidden="true">${s.earned ? '&#10003;' : String(puzzleDate(START_DATE, s.day).getUTCDate())}</span><small>${new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(puzzleDate(START_DATE, s.day))}</small></div>`).join('');
   $('#previous-week').disabled = collectionWeek === 0;
   $('#next-week').disabled = collectionWeek >= Math.floor(Math.max(0, today) / 7);
 }

@@ -1,9 +1,12 @@
-export const MAX_CHECKS = 6;
-export const checkLimit = puzzle => puzzle.maxChecks ?? MAX_CHECKS;
+export const MAX_CHECKS = 3;
+export const checkLimit = () => MAX_CHECKS;
+export const wrongChecks = state => state.checks.filter(c => !c.correct.every(Boolean)).length;
+export const livesRemaining = state => Math.max(0, MAX_CHECKS - wrongChecks(state));
+export const score = state => state.status === 'won' ? livesRemaining(state) : 0;
 export const DAY_MS = 86400000;
 export const copy = value => JSON.parse(JSON.stringify(value));
 export const emptyBoard = () => [null, null, null];
-export const newState = () => ({ board: emptyBoard(), undo: [], checks: [], status: 'playing' });
+export const newState = () => ({ rulesVersion: 2, board: emptyBoard(), undo: [], checks: [], status: 'playing' });
 
 export function dayIndex(startDate, now = Date.now()) {
   return Math.floor((now - Date.parse(`${startDate}T00:00:00Z`)) / DAY_MS);
@@ -89,12 +92,12 @@ export function check(puzzle, state) {
   const correct = currentWords.map((word, row) => word === puzzle.answers[row]);
   state.checks.push({ signature, correct });
   if (correct.every(Boolean)) state.status = 'won';
-  else if (state.checks.length === checkLimit(puzzle)) state.status = 'lost';
+  else if (livesRemaining(state) === 0) state.status = 'lost';
   return { kind: state.status, correct };
 }
 
 export function restore(puzzle, saved) {
-  if (!saved || !validBoard(puzzle, saved.board) || !Array.isArray(saved.checks) || saved.checks.length > checkLimit(puzzle)) return newState();
+  if (!saved || !validBoard(puzzle, saved.board) || !Array.isArray(saved.checks) || saved.checks.length > (saved.rulesVersion === 2 ? 3 : 6)) return newState();
   const signatures = new Set();
   for (const c of saved.checks) {
     if (typeof c.signature !== 'string' || signatures.has(c.signature) || !Array.isArray(c.correct) || c.correct.length !== 4 || c.correct.some(v => typeof v !== 'boolean')) return newState();
@@ -105,9 +108,11 @@ export function restore(puzzle, saved) {
   const checks = copy(saved.checks);
   const wonAt = checks.findIndex(c => c.correct.every(Boolean));
   if (wonAt !== -1 && wonAt !== checks.length - 1) return newState();
-  const status = wonAt !== -1 ? 'won' : checks.length === checkLimit(puzzle) ? 'lost' : 'playing';
-  if (status !== 'playing' && words(puzzle, saved.board).join('|') !== checks.at(-1).signature) return newState();
+  const legacyComplete = saved.rulesVersion !== 2 && (wonAt !== -1 || checks.length >= (puzzle.maxChecks ?? 6));
+  const status = wonAt !== -1 ? 'won' : legacyComplete || checks.length >= 3 ? 'lost' : 'playing';
+  if ((saved.rulesVersion === 2 || legacyComplete) && status !== 'playing' && words(puzzle, saved.board).join('|') !== checks.at(-1).signature) return newState();
   return {
+    rulesVersion: saved.rulesVersion !== 2 && status !== 'playing' ? 1 : 2,
     board: copy(saved.board), checks, status,
     undo: Array.isArray(saved.undo) ? saved.undo.filter(b => validBoard(puzzle, b)).slice(-100).map(copy) : []
   };
@@ -152,6 +157,7 @@ export function stats(results, today) {
 }
 
 export function shareText(puzzle, state, url) {
-  return `Word Pool ${puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`}\n${state.status === 'won' ? state.checks.length : 'X'}/${checkLimit(puzzle)} checks\n` +
-    [0, 1, 2, 3].map(row => state.checks.map(c => c.correct[row] ? '🟩' : '⬜').join('')).join('\n') + `\nPlay this relay: ${url}`;
+  const result = state.rulesVersion === 1 ? `Previous rules · ${state.checks.length} checks` : `Score: ${score(state)}/3\n${state.status === 'won' ? `${livesRemaining(state)} ${livesRemaining(state) === 1 ? 'life' : 'lives'} saved` : 'Out of lives'}`;
+  return `Word Pool ${puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`}\n${result}\n` +
+    [0, 1, 2, 3].map(row => state.checks.map(c => c.correct[row] ? '🟩' : '⬜').join('')).join('\n') + `\nPlay Word Pool: ${url}`;
 }

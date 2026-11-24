@@ -63,6 +63,11 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 [data-theme="pool"] .controls-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px; }
 [data-theme="pool"] .controls-heading .instruction { padding:0; text-align:left; font-size:13px; line-height:1.4; font-weight:700; color:#6c596d; }
 [data-theme="pool"] .checks-remaining { flex-shrink:0; font-size:12px; font-weight:800; color:#49334e; white-space:nowrap; }
+.checks-remaining { display:flex; align-items:center; gap:7px; }
+.life-hearts { color:#b94f55; font-size:18px; letter-spacing:2px; line-height:1; }
+.spent-lives { color:#d4c9cd; }
+.life-label { font-size:11px; }
+.motion-hint { color:#163e50; font-size:12px; font-weight:800; margin:0; max-width:155px; line-height:1.4; padding-bottom:10px; }
 [data-theme="pool"] .action-row { display:grid; grid-template-columns:auto minmax(0,1fr); gap:20px; align-items:center; }
 [data-theme="pool"] .action-row .secondary-controls { gap:2px; }
 [data-theme="pool"] .action-row .secondary-button { min-height:48px; padding:0 10px; background:transparent; border:0; border-radius:10px; font-size:13px; font-weight:800; }
@@ -98,6 +103,11 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 [data-theme="pool"] .postcard { background:#fff9ed; border:0; box-shadow:0 4px 0 #087e9150; }
 [data-theme="pool"] .postcard h2,[data-theme="pool"] .postcard p { color:#6c596d; }
 [data-theme="pool"] .postage.earned { background:#ffda47; color:#49334e; border-color:#d8ac26; box-shadow:2px 3px 0 #dec577; }
+[data-theme="pool"] .postage,[data-theme="pool"] .postage.earned,[data-theme="pool"] .postage.earned:nth-child(even) { background:transparent; border:0; box-shadow:none; transform:none; padding:5px 0; color:#6c596d; }
+[data-theme="pool"] .postage > span { display:grid; place-items:center; width:34px; height:34px; margin:0 auto; border:2px solid #dfd4c1; border-radius:50%; font-size:18px; }
+[data-theme="pool"] .postage.earned > span { background:#ffda47; color:#49334e; border-color:#d8ac26; }
+[data-theme="pool"] .postage.today { outline:none; }
+[data-theme="pool"] .postage.today > span { outline:2px solid #124653; outline-offset:3px; }
 [data-theme="pool"] footer { color:#163e50; }
 [data-pool-motion="off"] .pool-light,[data-pool-motion="off"] .platypus-art,[data-pool-motion="off"] .pal-wake,[data-pool-motion="off"] .sip-bubble { animation-play-state:paused; }
 @keyframes water-drift { from { transform:translate(-14px,-8px); } to { transform:translate(14px,8px); } }
@@ -106,11 +116,14 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 @keyframes sip { 0%,40%,65%,100% { opacity:0; transform:translateY(0); } 48% { opacity:.8; } 60% { opacity:0; transform:translateY(-8px); } }
 @keyframes pool-ripple { from { transform:translate(-50%,-50%) scale(.6); opacity:.7; } to { transform:translate(-50%,-50%) scale(3); opacity:0; } }
 @media(max-width:719px) {
-  [data-theme="pool"] .intro { padding:12px 0 0; }
+  [data-theme="pool"] .masthead { padding-top:max(18px, env(safe-area-inset-top)); margin-bottom:20px; }
+  [data-theme="pool"] .intro { padding:12px 10px 0; }
+  [data-theme="pool"] .title-line { margin:14px 0 15px; }
+  [data-theme="pool"] .dek { max-width:250px; margin:0 auto; line-height:1.5; }
   [data-theme="pool"] h1,[data-theme="pool"] h1 span { font-size:45px; letter-spacing:-1.2px; }
   [data-theme="pool"] .edition { font-size:10px; }
   [data-theme="pool"] .dek { font-size:13px; }
-  [data-theme="pool"] .pool-lounge { min-height:114px; margin-bottom:10px; }
+  [data-theme="pool"] .pool-lounge { min-height:136px; margin-bottom:18px; }
   .pool-pal { width:118px; height:118px; }
   [data-theme="pool"] #game { padding:12px 10px; border-radius:22px; }
   [data-theme="pool"] .board-header { margin-bottom:10px; }
@@ -121,4 +134,5 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
   [data-theme="pool"] .row-heading { margin-bottom:7px; }
   [data-theme="pool"] .tile { font-size:25px; border-radius:9px; }
 }
+@media(max-width:350px) { .life-label { display:none; } [data-theme="pool"] .controls-heading { gap:8px; } }
 @media(prefers-reduced-motion:reduce) { .pool-light,.platypus-art,.pal-wake,.sip-bubble,.pool-ripple { animation:none!important; } .swim-wake,.wake-trail { display:none; } }

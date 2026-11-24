@@ -3,10 +3,19 @@ export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // Relative to a comfortable holding angle. Ignore small tremors before easing in.
 export function tiltVector(beta, gamma, neutral, angle = 0) {
   if (![beta, gamma].every(Number.isFinite)) return null;
-  const wrap = degrees => ((degrees + 540) % 360) - 180;
-  const response = degrees => Math.sign(degrees) * Math.pow(clamp((Math.abs(degrees) - 3) / 25, 0, 1), 1.35);
-  const x = response(wrap(gamma - neutral.gamma));
-  const y = response(wrap(beta - neutral.beta));
+  const radiansOf = degrees => degrees * Math.PI / 180;
+  const b = radiansOf(beta), g = radiansOf(gamma), nb = radiansOf(neutral.beta), ng = radiansOf(neutral.gamma);
+  // Project gravity into the neutral holding frame rather than subtracting Euler angles.
+  // This keeps upright and reclined phone holds from continually pulling downward.
+  const gx = Math.cos(b) * Math.sin(g), gy = Math.sin(b), gz = Math.cos(b) * Math.cos(g);
+  const right = gx * Math.cos(ng) - gz * Math.sin(ng);
+  const down = -gx * Math.sin(nb) * Math.sin(ng) + gy * Math.cos(nb) - gz * Math.sin(nb) * Math.cos(ng);
+  const forward = gx * Math.cos(nb) * Math.sin(ng) + gy * Math.sin(nb) + gz * Math.cos(nb) * Math.cos(ng);
+  const response = value => {
+    const degrees = Math.atan2(value, forward) * 180 / Math.PI;
+    return Math.abs(degrees) < 2 ? 0 : Math.sign(degrees) * Math.pow(clamp((Math.abs(degrees) - 2) / 16, 0, 1), 1.1);
+  };
+  const x = response(right), y = response(down);
   const radians = angle * Math.PI / 180;
   return { x: clamp(x * Math.cos(radians) + y * Math.sin(radians), -1, 1), y: clamp(y * Math.cos(radians) - x * Math.sin(radians), -1, 1) };
 }

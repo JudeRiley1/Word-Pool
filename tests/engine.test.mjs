@@ -65,16 +65,16 @@ test('check only complete boards, duplicate submissions, undo and reset preserve
   assert.equal(state.checks.length, 1);
 });
 
-test('six distinct unsuccessful checks end and restore a loss', () => {
+test('three distinct unsuccessful checks end and restore a loss', () => {
   const state = newState();
   move(PRACTICE, state, 1, 1, 0);
   move(PRACTICE, state, 2, 1, 0);
   const arrangements = [[0, 0], [0, 1], [0, 3], [0, 4], [1, 0], [1, 1]];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 3; i++) {
     move(PRACTICE, state, 0, ...arrangements[i]);
-    assert.equal(check(PRACTICE, state).kind, i === 5 ? 'lost' : 'playing');
+    assert.equal(check(PRACTICE, state).kind, i === 2 ? 'lost' : 'playing');
   }
-  assert.equal(state.checks.length, 6);
+  assert.equal(state.checks.length, 3);
   assert.deepEqual(restore(PRACTICE, state), state);
   assert.equal(undo(state), false);
 });
@@ -110,8 +110,8 @@ test('share format contains checks and link, with no answers or clues', () => {
   state.board = solve(puzzle)[0];
   check(puzzle, state);
   const text = shareText(puzzle, state, 'https://example.org/letter-relay/');
-  assert.equal(text, 'Word Pool #001\n1/6 checks\n🟩\n🟩\n🟩\n🟩\nPlay this relay: https://example.org/letter-relay/');
+  assert.equal(text, 'Word Pool #001\nScore: 3/3\n3 lives saved\n🟩\n🟩\n🟩\n🟩\nPlay Word Pool: https://example.org/letter-relay/');
   for (const secret of [...puzzle.starts, ...puzzle.answers, ...puzzle.clues]) assert.ok(!text.includes(secret));
   state.status = 'lost';
-  assert.match(shareText(puzzle, state, 'https://example.org/'), /X\/6/);
+  assert.match(shareText(puzzle, state, 'https://example.org/'), /Score: 0\/3/);
 });

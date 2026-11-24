@@ -4,6 +4,10 @@ export function installPool() {
   const root = document.documentElement, scene = document.getElementById('pool-scene');
   const pal = document.getElementById('pool-pal'), squish = pal.querySelector('.pal-squish');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const touchPhone = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+  const motionHint = document.getElementById('motion-hint');
+  const hint = text => { motionHint.textContent = text; motionHint.hidden = !text; };
+  let sensorTimeout;
   const wake = document.createElement('div'); wake.className = 'swim-wake'; wake.setAttribute('aria-hidden', 'true');
   wake.innerHTML = '<i></i><i></i><i></i>'; scene.prepend(wake);
   let motion = !reduced.matches, visible = true, raf = 0, last = 0, elapsed = 0;
@@ -30,30 +34,33 @@ export function installPool() {
       scene.prepend(trail); setTimeout(() => trail.remove(), 1250);
     }
   }
-  function recenter() { neutral = null; targetGravity = smoothGravity = { x: 0, y: 0 }; calibratingUntil = performance.now() + 450; }
+  function recenter() { neutral = null; targetGravity = smoothGravity = { x: 0, y: 0 }; state.vx = state.vy = 0; calibratingUntil = performance.now() + 450; }
   function orientation(event) {
     if (!moving() || ![event.beta, event.gamma].every(Number.isFinite)) return;
     sensorAt = performance.now();
-    if (!neutral) { neutral = { beta: event.beta, gamma: event.gamma }; calibratingUntil = sensorAt + 450; }
+    if (!neutral) { neutral = { beta: event.beta, gamma: event.gamma }; calibratingUntil = sensorAt + 450; state.vx = state.vy = 0; clearTimeout(sensorTimeout); }
     if (sensorAt < calibratingUntil) {
       const delta = value => ((value + 540) % 360) - 180;
       neutral.beta += delta(event.beta - neutral.beta) * .2; neutral.gamma += delta(event.gamma - neutral.gamma) * .2;
       return;
     }
+    hint('');
     targetGravity = tiltVector(event.beta, event.gamma, neutral, screen.orientation?.angle ?? window.orientation ?? 0);
   }
   function listenToTilt() {
     if (sensors) return;
     sensors = true; recenter(); window.addEventListener('deviceorientation', orientation, { passive: true });
+    if (touchPhone) { hint('Hold your phone comfortably for a moment'); sensorTimeout = setTimeout(() => { if (!neutral) hint('No motion signal yet. You can still drag your pal'); }, 3500); }
   }
   async function requestTilt() {
     if (reduced.matches || permissionPending || !window.isSecureContext || !window.DeviceOrientationEvent) return;
-    if (sensors) { recenter(); return; }
+    if (sensors) { recenter(); if (touchPhone) hint('Centering around your holding angle'); return; }
     if (askedPermission) return;
     askedPermission = true; permissionPending = true;
     try {
       if (typeof DeviceOrientationEvent.requestPermission !== 'function' || await DeviceOrientationEvent.requestPermission() === 'granted') listenToTilt();
-    } catch { /* Drift and dragging remain available without sensors. */ }
+      else hint('Motion not allowed. You can still drag your pal');
+    } catch { hint('Motion unavailable. You can still drag your pal'); }
     finally { permissionPending = false; }
   }
   function resize() {
@@ -67,7 +74,7 @@ export function installPool() {
     const startY = lounge.top >= 0 && lounge.top < scene.clientHeight - pal.offsetHeight ? lounge.top : 75;
     state.x = scene.clientWidth < 720 ? bounds.width * .62 : Math.min(bounds.width, scene.clientWidth / 2 + 330);
     state.y = clamp(startY, 0, bounds.height);
-    state.vx = 22; state.vy = 8;
+    state.vx = touchPhone ? 0 : 22; state.vy = touchPhone ? 0 : 8;
     paint();
   }
   function splash() {
@@ -93,9 +100,9 @@ export function installPool() {
     const dt = last ? Math.min((now - last) / 1000, .035) : 1 / 60; last = now; elapsed += dt;
     if (!drag) {
       const hasTilt = sensors && neutral;
-      const blend = 1 - Math.exp(-dt / .18);
+      const blend = 1 - Math.exp(-dt / .09);
       smoothGravity = { x: smoothGravity.x + (targetGravity.x - smoothGravity.x) * blend, y: smoothGravity.y + (targetGravity.y - smoothGravity.y) * blend };
-      const drift = hasTilt ? smoothGravity : { x: Math.sin(elapsed * .47) * .18, y: Math.cos(elapsed * .61) * .13 };
+      const drift = hasTilt ? smoothGravity : touchPhone ? { x: 0, y: 0 } : { x: Math.sin(elapsed * .47) * .18, y: Math.cos(elapsed * .61) * .13 };
       state = stepFloat(state, drift, bounds, dt);
       if (state.impact > 18 && now - lastBump > 170) { bump(state.hitX ? 'x' : 'y', state.impact / 900); lastBump = now; }
       paint();
@@ -132,7 +139,7 @@ export function installPool() {
   });
   pal.addEventListener('pointerup', endDrag); pal.addEventListener('pointercancel', event => { state.vx = state.vy = 0; endDrag(event); });
   pal.addEventListener('lostpointercapture', endDrag);
-  pal.addEventListener('click', () => { if (suppressClick || !moving()) return; requestTilt(); state.vx = state.x > bounds.width / 2 ? -120 : 120; state.vy = state.y > bounds.height / 2 ? -70 : 70; bump('y'); });
+  pal.addEventListener('click', async () => { if (suppressClick || !moving()) return; await requestTilt(); if (!touchPhone && !neutral) { state.vx = state.x > bounds.width / 2 ? -120 : 120; state.vy = state.y > bounds.height / 2 ? -70 : 70; } bump('y'); });
   pal.addEventListener('keydown', event => { if (!moving()) return; const keys = { ArrowLeft: [-150, 0], ArrowRight: [150, 0], ArrowUp: [0, -150], ArrowDown: [0, 150] }; if (keys[event.key]) { event.preventDefault(); [state.vx, state.vy] = keys[event.key]; splash(); } });
   new ResizeObserver(resize).observe(scene);
   new IntersectionObserver(entries => { visible = entries[0].isIntersecting; syncMotion(); }).observe(scene);
@@ -149,4 +156,5 @@ export function installPool() {
   }).observe(document.getElementById('game'), { attributes: true, attributeFilter: ['data-status'] });
   resize(); syncMotion();
   if (window.isSecureContext && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') listenToTilt();
+  else if (touchPhone && !reduced.matches) hint('Tap your pal to enable phone tilt');
 }

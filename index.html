@@ -37,14 +37,14 @@
         <p id="theme-label" class="theme-label" hidden></p>
       </section>
 
-      <div class="pool-lounge" aria-hidden="true"></div>
+      <div class="pool-lounge"><p id="motion-hint" class="motion-hint" role="status" hidden></p></div>
 
       <div id="practice-banner" class="practice-banner" hidden><span><strong id="mode-label">Practice relay</strong><br><span id="mode-note">Separate from your daily stats</span></span><button id="exit-practice" class="text-button">Back to daily</button></div>
       <section id="game" aria-label="Word Pool puzzle">
         <div class="board-header"><span><span id="puzzle-label">TODAY</span><small id="difficulty">Steady</small></span><span id="delivery-progress" class="delivery-progress">0 / 3 delivered</span></div>
         <div id="board" tabindex="-1"></div>
         <div class="game-controls">
-          <div class="controls-heading"><div class="instruction" id="instruction" aria-live="polite">Drag a letter into the word below</div><span id="checks-label" class="checks-remaining">6 checks left</span></div>
+          <div class="controls-heading"><div class="instruction" id="instruction" aria-live="polite">Drag a letter into the word below</div><span id="checks-label" class="checks-remaining">3 lives</span></div>
           <div class="action-row"><div class="secondary-controls"><button id="undo" class="secondary-button">Undo</button><button id="reset" class="secondary-button">Reset</button></div><button id="check" class="primary-button" disabled>Check words</button></div>
         </div>
         <p id="message" class="message" role="status" aria-live="polite"></p>
@@ -52,8 +52,8 @@
       </section>
       <section id="unavailable" class="unavailable" hidden><span class="eyebrow">A PAUSE IN THE RELAY</span><h2>No daily puzzle scheduled.</h2><p id="unavailable-text"></p><button id="unavailable-practice" class="primary-button">Play the practice relay</button></section>
       <section class="postcard" aria-labelledby="postcard-title">
-        <div class="postcard-heading"><div><h2 id="postcard-title">Your weekly postcard</h2><p id="postcard-dates"></p></div><div class="week-controls"><button id="previous-week" aria-label="Previous postcard">‹</button><button id="next-week" aria-label="Next postcard">›</button></div></div>
-        <div id="stamps" class="stamps"></div><p><strong id="stamp-count"></strong> · Finish the daily puzzle to earn a stamp</p>
+        <div class="postcard-heading"><div><h2 id="postcard-title">Weekly Pool Pass</h2><p id="postcard-dates"></p></div><div class="week-controls"><button id="previous-week" aria-label="Previous week">‹</button><button id="next-week" aria-label="Next week">›</button></div></div>
+        <div id="stamps" class="stamps"></div><p><strong id="stamp-count"></strong> · Finish a daily puzzle to mark your visit</p>
       </section>
       <footer><p>New puzzle every day at midnight UTC</p></footer>
     </main>
@@ -63,7 +63,7 @@
     <div class="dialog-top"><span class="eyebrow">WORD POOL</span><button class="close-button" data-close aria-label="Close how to play">×</button></div>
     <h2 id="help-title">How to play</h2>
     <p>Turn each starting word into the answer to its clue. Send <strong>one original letter</strong> from each of the first three rows to the row below.</p>
-    <ol class="rules"><li><strong>Drag a letter down</strong><br>Move any original letter from one of the first three rows into the word below.</li><li><strong>Drop at the marker</strong><br>The line between letters shows the insertion point, and a preview shows the new word. Release outside the highlighted row to cancel.</li><li><strong>Check your words</strong><br>After three transfers, press Check words. The daily relay gives you six checks; the optional hard relay gives you four. Green means the right letter and spot, yellow means the letter belongs elsewhere in the word, and gray means it is not needed.</li></ol>
+    <ol class="rules"><li><strong>Drag a letter down</strong><br>Move any original letter from one of the first three rows into the word below.</li><li><strong>Drop at the marker</strong><br>The line between letters shows the insertion point, and a preview shows the new word. Release outside the highlighted row to cancel.</li><li><strong>Check your words</strong><br>After three transfers, press Check words. You start with three lives. Each incorrect check costs one life, even if several words are wrong. Three wrong checks end the round. Correct checks and repeated identical guesses cost no lives. Your score is the lives you save, out of three. Green means the right letter and spot, yellow means the letter belongs elsewhere in the word, and gray means it is not needed.</li></ol>
     <div class="rule-note">You can make transfers in any order. A received letter has an envelope marker. Drag it within its new row to reposition it, or back to its original row to cancel the transfer. It returns to its original spot. Drag a different original letter down to replace a transfer.</div>
     <div class="practice-example" aria-label="Practice example: move G from GLASS to RAIN"><div><span class="example-sent">G</span><span>L</span><span>A</span><span>S</span><span>S</span></div><span class="example-arrow" aria-hidden="true">↓</span><div><span class="example-received">G</span><span class="example-sent">R</span><span>A</span><span>I</span><span>N</span></div><p>GLASS becomes LASS. RAIN becomes GAIN<br>when its R continues to the next row.</p></div>
     <p class="keyboard-note"><strong>Keyboard:</strong> Tab to a letter and press Enter or Space to pick it up. Use Left and Right to choose a spot, then Enter to drop. Backspace returns a picked-up received letter to its original row. Escape cancels. On phones, scroll from the space outside the letter tiles.</p>
@@ -74,7 +74,7 @@
 
   <dialog id="stats-dialog" aria-labelledby="stats-title"><div class="dialog-top"><span class="eyebrow">YOUR DAILY RECORD</span><button class="close-button" data-close aria-label="Close statistics">×</button></div><h2 id="stats-title">Your stats</h2><div id="stats-content"></div><p class="dialog-fineprint">Daily results are saved in this browser</p></dialog>
 
-  <dialog id="archive-dialog" aria-labelledby="archive-title"><div class="dialog-top"><span class="eyebrow">MORE TO PLAY</span><button class="close-button" data-close aria-label="Close archive">×</button></div><h2 id="archive-title">The relay archive</h2><p>Play past daily puzzles and the bonus collection. Archive play does not change daily streaks or stamps.</p><div id="archive-list"></div></dialog>
+  <dialog id="archive-dialog" aria-labelledby="archive-title"><div class="dialog-top"><span class="eyebrow">MORE TO PLAY</span><button class="close-button" data-close aria-label="Close archive">×</button></div><h2 id="archive-title">The relay archive</h2><p>Play past daily puzzles and the bonus collection. Archive play does not change daily streaks or visits.</p><div id="archive-list"></div></dialog>
 
   <dialog id="tutorial-dialog" aria-labelledby="tutorial-title"><span class="eyebrow">TRY ONE HANDOFF</span><h2 id="tutorial-title">Meet Word Pool</h2><p id="tutorial-prompt" aria-live="polite"></p><div id="tutorial-board" class="drag-enabled" tabindex="-1"></div><p id="tutorial-explanation"></p><button id="tutorial-play" class="primary-button" hidden>Play the puzzle</button><button id="tutorial-skip" class="text-button">Skip to puzzle</button></dialog>
 
