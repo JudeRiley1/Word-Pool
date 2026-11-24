@@ -1,6 +1,9 @@
-import { START_DATE, PUZZLES, PRACTICE } from './puzzles.js';
-import { MAX_CHECKS, DAY_MS, copy, newState, dayIndex, tokens, words, complete, move, undo, reset, check, restore, solve, stats, shareText } from './engine.js';
+import { START_DATE, PUZZLES, PRACTICE, BONUSES, CHALLENGES } from './puzzles.js';
+import { checkLimit, DAY_MS, newState, dayIndex, tokens, words, complete, move, undo, reset, check, restore, solve, stats, shareText, letterFeedback } from './engine.js';
 import { deliverShare } from './sharing.js';
+import { puzzleDate, resolvePuzzleLink, puzzleLink, postcard, saveProgress, insertionGap } from './progression.js';
+import { captureTiles, animateHandoff, playSound, installDrag } from './effects.js';
+import { installTutorial } from './tutorial.js';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,9 +23,25 @@ let dailyPuzzle = PUZZLES[today];
 let dailyState = dailyPuzzle ? restore(dailyPuzzle, data.daily[dailyPuzzle.id]) : null;
 let practiceState = newState();
 let practicing = false;
+let archivePuzzle = null;
+let archiveState = null;
+let archiveIndex = null;
+let collectionWeek = Math.floor(Math.max(0, today) / 7);
+let preferences;
+try { preferences = JSON.parse(localStorage.getItem('letter-relay:preferences')) || {}; } catch { preferences = {}; }
+if (typeof preferences !== 'object' || Array.isArray(preferences)) preferences = {};
+preferences.sound ??= false;
+let revealing = false;
+let revealTimer;
 let selection = null;
-const currentPuzzle = () => practicing ? PRACTICE : dailyPuzzle;
-const currentState = () => practicing ? practiceState : dailyState;
+let keyboardGap = 0;
+const currentPuzzle = () => practicing ? PRACTICE : archivePuzzle || dailyPuzzle;
+const currentState = () => practicing ? practiceState : archivePuzzle ? archiveState : dailyState;
+const dateLabel = date => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(date);
+
+function savePreferences() {
+  try { localStorage.setItem('letter-relay:preferences', JSON.stringify(preferences)); } catch { storageOK = false; warnStorage(); }
+}
 
 function warnStorage() {
   if (storageOK || $('.storage-warning')) return;
@@ -33,11 +52,8 @@ function warnStorage() {
 }
 
 function persist() {
-  if (practicing || !dailyPuzzle) return;
-  const latest = readStore();
-  latest.daily[dailyPuzzle.id] = copy(dailyState);
-  if (dailyState.status !== 'playing' && !latest.results[today]) latest.results[today] = { status: dailyState.status, checks: dailyState.checks.length };
-  data = memory = latest;
+  if (practicing || !currentPuzzle()) return;
+  data = memory = saveProgress(readStore(), currentPuzzle(), currentState(), today, Boolean(archivePuzzle));
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { storageOK = false; }
   warnStorage();
 }
@@ -48,53 +64,54 @@ function focusKey(key) { document.querySelector(`[data-focus="${key}"]`)?.focus(
 function render() {
   const puzzle = currentPuzzle(), state = currentState();
   const active = document.activeElement?.dataset?.focus;
-  $('#edition').textContent = practicing ? 'THE PRACTICE RELAY' : `DAILY RELAY ${dailyPuzzle ? `Nº ${String(dailyPuzzle.id).padStart(3, '0')}` : ''}`;
-  $('#puzzle-date').textContent = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date()).toUpperCase();
-  $('#practice-banner').hidden = !practicing;
+  $('#edition').textContent = practicing ? 'PRACTICE' : puzzle?.kind === 'hard' ? 'DAILY CHALLENGE' : archivePuzzle ? 'FROM THE ARCHIVE' : 'YOUR DAILY WORD PUZZLE';
+  $('#puzzle-date').textContent = archivePuzzle && archiveIndex === null ? 'BONUS COLLECTION' : dateLabel(puzzleDate(START_DATE, archivePuzzle ? archiveIndex : today)).toUpperCase();
+  $('#practice-banner').hidden = !practicing && !archivePuzzle;
+  $('#mode-label').textContent = practicing ? 'Practice relay' : archivePuzzle?.title || `Archive relay #${puzzle?.id}`;
+  $('#mode-note').textContent = puzzle?.kind === 'hard' ? 'Longer words · Four checks · Separate stats' : 'Separate from your daily stats';
+  $('#theme-label').textContent = puzzle?.theme ? `${puzzle.theme} edition` : '';
+  $('#theme-label').hidden = !puzzle?.theme;
+  renderPostcard();
   $('#game').hidden = !puzzle;
   $('#unavailable').hidden = Boolean(puzzle);
   if (!puzzle) {
     $('#unavailable-text').textContent = today < 0 ? `The first relay arrives on ${START_DATE} at midnight UTC. In the meantime, try a practice round.` : 'You’ve reached the end of our scheduled relays. More puzzles can be added soon. The practice relay is always here.';
     return;
   }
-  $('#puzzle-label').textContent = practicing ? 'PRACTICE DELIVERY' : `TODAY’S DELIVERY #${String(puzzle.id).padStart(3, '0')}`;
+  $('#puzzle-label').textContent = practicing ? 'PRACTICE' : puzzle.kind === 'hard' ? `HARD #${String(archiveIndex + 1).padStart(3, '0')}` : puzzle.title ? `BONUS ${String(puzzle.id).split('-').at(-1).padStart(2, '0')}` : `${archivePuzzle ? 'RELAY' : 'TODAY'} #${String(puzzle.id).padStart(3, '0')}`;
+  $('#difficulty').textContent = puzzle.difficulty || 'Steady';
   $('#delivery-progress').textContent = `${state.board.filter(Boolean).length} / 3 delivered`;
   const ended = state.status !== 'playing';
   $('#game').dataset.status = state.status;
+  $('#board').classList.add('drag-enabled');
   const signature = words(puzzle, state.board).join('|');
   const feedback = state.checks.find(c => c.signature === signature);
   $('#board').innerHTML = puzzle.starts.map((start, row) => {
     const outgoing = state.board[row];
-    const rowTokens = tokens(puzzle, state.board, row);
-    const tileHTML = rowTokens.map(token => {
+    const receiving = selection && selection.row + 1 === row;
+    const rowTokens = tokens(puzzle, state.board, row).filter(t => !(receiving && t.received));
+    const colors = feedback && !selection ? letterFeedback(rowTokens.map(t => t.letter).join(''), puzzle.answers[row]) : null;
+    const tileHTML = rowTokens.map((token, position) => {
       const selected = token.received ? selection?.row === row - 1 && selection.index === state.board[row - 1]?.index : selection?.row === row && selection.index === token.index;
       const interactive = !ended && (token.received || row < 3);
-      const cls = `tile${token.received ? ' received' : ''}${selected ? ' selected' : ''}`;
-      if (!interactive) return `<span class="${cls}" aria-label="${token.letter}${token.received ? ', received' : ''}">${token.letter}</span>`;
+      const cls = `tile${token.received ? ' received' : ''}${selected ? ' selected' : ''}${colors ? ` letter-${colors[position]}` : ''}`;
+      const feedbackLabel = colors ? `, ${colors[position] === 'correct' ? 'right letter and spot' : colors[position] === 'present' ? 'right letter, wrong spot' : 'letter not needed'}` : '';
+      const tileKey = token.received ? `${row - 1}-${state.board[row - 1].index}` : `${row}-${token.index}`;
+      if (!interactive) return `<span class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" aria-label="${token.letter}${token.received ? ', received' : ''}${feedbackLabel}">${token.letter}</span>`;
       const focus = token.received ? `received-${row}` : `letter-${row}-${token.index}`;
-      return `<button class="${cls}" data-action="${token.received ? 'received' : 'letter'}" data-row="${row}" data-index="${token.index}" data-focus="${focus}" aria-pressed="${Boolean(selected)}" aria-label="${token.received ? `Reposition received ${token.letter} in row ${row + 1}` : `Send ${token.letter}, letter ${token.index + 1} of ${start}, to row ${row + 2}`}">${token.letter}</button>`;
+      return `<button class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" data-action="${token.received ? 'received' : 'letter'}" data-row="${row}" data-index="${token.index}" data-focus="${focus}" aria-pressed="${Boolean(selected)}" aria-label="${token.received ? `Reposition received ${token.letter} in row ${row + 1}` : `Drag ${token.letter}, letter ${token.index + 1} of ${start}, to row ${row + 2}`}${feedbackLabel}">${token.letter}</button>`;
     }).join('');
-    let slots = '';
-    if (selection && selection.row + 1 === row) {
-      const survivors = [...start].map((letter, index) => ({ letter, index })).filter(t => outgoing?.index !== t.index);
-      const positions = [...survivors.map(t => t.index), start.length];
-      slots = `<div class="insertion"><p>Place <strong>${puzzle.starts[selection.row][selection.index]}</strong> in row ${row + 1}</p><div class="slot-line">${positions.map((gap, slot) => {
-        const label = slot === 0 ? 'first' : slot === positions.length - 1 ? 'last' : `after ${survivors[slot - 1].letter}`;
-        return `<button class="slot" data-action="slot" data-gap="${gap}" data-focus="slot-${row}-${gap}" aria-label="Insert ${puzzle.starts[selection.row][selection.index]} ${label}, position ${slot + 1}">+<small>${label}</small></button>`;
-      }).join('')}</div></div>`;
-    }
-    return `<section class="puzzle-row${feedback?.correct[row] ? ' matched' : ''}" aria-label="Row ${row + 1}: ${esc(puzzle.clues[row])}">
+    return `<section data-board-row="${row}" class="puzzle-row${feedback?.correct[row] ? ' matched' : ''}${receiving ? ' drop-row' : ''}${revealing ? ' checking' : ''}" style="--reveal-delay:${row * 140}ms" aria-label="Row ${row + 1}: ${esc(puzzle.clues[row])}">
       <div class="row-heading"><span class="row-number" aria-hidden="true">${row + 1}</span><div class="clue-block"><p class="clue">${esc(puzzle.clues[row])}</p>${feedback ? `<span class="row-status${feedback.correct[row] ? ' correct' : ''}">${feedback.correct[row] ? '✓ Clue matched!' : '○ Try another delivery'}</span>` : ''}</div></div>
-      <div class="row-word"><div class="tile-line">${tileHTML}</div><div class="row-meta"><span class="starting-word">From ${start}</span>${outgoing ? ended ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : `<button class="sent-edit${selection?.row === row ? ' selected' : ''}" data-action="letter" data-row="${row}" data-index="${outgoing.index}" data-focus="sent-${row}" aria-label="Reposition ${start[outgoing.index]} sent from row ${row + 1}">${start[outgoing.index]} sent · edit</button>` : ''}</div></div>
-      ${slots}</section>`;
+      <div class="row-word"><div class="tile-line">${tileHTML}${receiving ? '<span class="drop-marker" hidden aria-hidden="true"></span>' : ''}</div><div class="row-meta"><span class="starting-word">From ${start}</span>${outgoing ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : ''}</div>${receiving ? `<p class="drop-preview">Drop ${puzzle.starts[selection.row][selection.index]} into this word</p>` : ''}</div></section>`;
   }).join('');
-  $('#undo').disabled = ended || !state.undo.length;
-  $('#reset').disabled = ended || state.board.every(m => !m);
-  $('#check').disabled = ended || !complete(state);
+  $('#undo').disabled = ended || revealing || !state.undo.length;
+  $('#reset').disabled = ended || revealing || state.board.every(m => !m);
+  $('#check').disabled = ended || revealing || !complete(state);
   $('#check').innerHTML = ended ? state.status === 'won' ? 'Relay complete <span aria-hidden="true">✓</span>' : 'Relay finished' : 'Check relay <span aria-hidden="true">✓</span>';
-  $('#checks-label').textContent = `${state.checks.length} of ${MAX_CHECKS} checks used`;
-  $('#check-dots').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}">${i < state.checks.length ? '✓' : i + 1}</span>`).join('');
-  $('#instruction').textContent = ended ? 'Relay finished' : selection ? `Choose a + slot in row ${selection.row + 2} (Esc to cancel)` : complete(state) ? 'Ready to check your words?' : 'Choose a letter, then tap a + slot in the next row';
+  $('#checks-label').textContent = `${state.checks.length} of ${checkLimit(puzzle)} checks used`;
+  $('#check-dots').innerHTML = Array.from({ length: checkLimit(puzzle) }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}">${i < state.checks.length ? '✓' : i + 1}</span>`).join('');
+  $('#instruction').textContent = ended ? 'Relay finished' : selection?.keyboard ? 'Left / Right to choose a spot, Enter to drop, Esc to cancel' : selection ? `Drag into row ${selection.row + 2} and release at the marker` : complete(state) ? 'Ready to check your words?' : 'Drag a letter into the word below';
   renderResult(puzzle, state);
   if (active) focusKey(active);
 }
@@ -105,47 +122,111 @@ function renderResult(puzzle, state) {
   if (result.hidden) { result.innerHTML = ''; return; }
   const won = state.status === 'won';
   const solution = solve(puzzle)[0];
-  result.innerHTML = `<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><p>${won ? `Completed in <strong>${state.checks.length} ${state.checks.length === 1 ? 'check' : 'checks'}</strong>` : 'You’ve used all six checks'}</p><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
+  result.classList.toggle('reveal-result', revealing);
+  const challengeDay = archivePuzzle ? archiveIndex : today;
+  const nextChallenge = !practicing && puzzle.kind !== 'hard' && challengeDay !== null ? CHALLENGES[challengeDay] : null;
+  const hardSaved = nextChallenge && data.archive?.[nextChallenge.id];
+  result.innerHTML = `${won ? '<div class="delivery-stamp">Delivered</div>' : ''}<h2 id="result-title">${won ? 'You solved it!' : 'See the solution'}</h2><div class="finish-stats"><span><strong>${state.checks.length}/${checkLimit(puzzle)}</strong> checks used</span>${!practicing && !archivePuzzle ? `<span><strong>${stats(data.results, today).current}</strong> day streak</span>` : '<span>Daily streak<br>stays unchanged</span>'}</div><div class="share-preview" aria-label="Your spoiler-free result">${state.checks[0].correct.map((_, row) => `<div>${state.checks.map(c => `<span class="share-cell ${c.correct[row] ? 'hit' : 'miss'}" aria-label="${c.correct[row] ? 'Matched' : 'Unmatched'}"></span>`).join('')}</div>`).join('')}</div><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
     ${!won ? `<ol class="transfer-summary">${solution.map((m, row) => `<li><strong>${puzzle.starts[row][m.index]}</strong> from ${puzzle.starts[row]} to ${puzzle.starts[row + 1]} → ${puzzle.answers[row + 1]}</li>`).join('')}</ol>` : ''}
     <button class="primary-button" id="share-result">Share result <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="10" r="2"/><circle cx="15" cy="4" r="2"/><circle cx="15" cy="16" r="2"/><path d="m7 9 6-4M7 11l6 4"/></svg></button>
-    ${practicing ? '<button class="text-button" id="replay-practice">Play practice again</button>' : '<p>Next daily relay<span id="countdown" class="countdown"></span><span id="next-note"></span></p>'}`;
+    ${nextChallenge ? `<div class="hard-invite"><h3>Up for a harder relay?</h3><p>Longer words, four checks, a new puzzle</p><button class="primary-button challenge-button" id="try-hard">${hardSaved ? hardSaved.status === 'playing' ? 'Continue the hard relay' : 'View hard relay result' : challengeDay === today ? 'Try today’s hard relay' : 'Try the hard relay'}</button><small>Your daily streak is safe</small></div>` : ''}
+    ${practicing ? '<button class="text-button" id="replay-practice">Play practice again</button>' : archivePuzzle ? '<button class="text-button" id="more-archive">Choose another relay</button>' : '<p class="earned-note">Today’s stamp is on your postcard</p><button class="text-button" id="more-archive">Play the archive</button><p>Next daily relay<span id="countdown" class="countdown"></span><span id="next-note"></span></p>'}`;
   $('#share-result').addEventListener('click', share);
+  $('#try-hard')?.addEventListener('click', () => openPuzzle(nextChallenge, challengeDay));
+  $('#more-archive')?.addEventListener('click', openArchive);
   $('#replay-practice')?.addEventListener('click', () => { practiceState = newState(); selection = null; announce('A fresh practice board.'); render(); $('#board').focus({ preventScroll: true }); });
   updateCountdown();
 }
 
+function placeLetter(gap, dragRect) {
+  if (!selection) return;
+  const puzzle = currentPuzzle(), state = currentState();
+  const { row, index } = selection;
+  const key = `${row}-${index}`;
+  const before = captureTiles($('#board'));
+  if (dragRect) before.set(key, dragRect);
+  const changed = move(puzzle, state, row, index, gap);
+  selection = null;
+  if (changed) persist();
+  render();
+  if (changed) { animateHandoff(before, key); playSound(preferences.sound); }
+  announce(`${puzzle.starts[row][index]} passed to row ${row + 2}`);
+  return row;
+}
+
+function showDropGap(gap) {
+  const row = $(`[data-board-row="${selection.row + 1}"]`);
+  const line = row.querySelector('.tile-line'), marker = row.querySelector('.drop-marker');
+  const tiles = [...line.querySelectorAll('.tile')];
+  const next = tiles.find(tile => Number(tile.dataset.originalIndex) === gap);
+  const lineRect = line.getBoundingClientRect();
+  const left = next ? next.getBoundingClientRect().left - 5 : tiles.at(-1).getBoundingClientRect().right + 3;
+  marker.style.left = `${Math.max(1, Math.min(lineRect.width - 5, left - lineRect.left))}px`;
+  marker.hidden = false; row.classList.add('is-over');
+  const board = currentState().board.map(m => m && { ...m });
+  board[selection.row] = { index: selection.index, gap };
+  row.querySelector('.drop-preview').textContent = `New word: ${words(currentPuzzle(), board)[selection.row + 1]}`;
+}
+
+installDrag($('#board'), {
+  enabled: () => currentState()?.status === 'playing' && !revealing,
+  begin: button => {
+    const row = Number(button.dataset.row) - (button.dataset.action === 'received' ? 1 : 0);
+    selection = { row, index: button.dataset.action === 'received' ? currentState().board[row].index : Number(button.dataset.index) };
+    announce(''); render();
+  },
+  target: (x, y) => {
+    if (!selection) return null;
+    const row = $(`[data-board-row="${selection.row + 1}"]`), rect = row.getBoundingClientRect();
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      row.classList.remove('is-over'); row.querySelector('.drop-marker').hidden = true;
+      row.querySelector('.drop-preview').textContent = `Drop ${currentPuzzle().starts[selection.row][selection.index]} into this word`;
+      return null;
+    }
+    const positions = [...row.querySelectorAll('.tile')].map(tile => {
+      const box = tile.getBoundingClientRect();
+      return { index: Number(tile.dataset.originalIndex), center: box.left + box.width / 2 };
+    });
+    const gap = insertionGap(positions, x, currentPuzzle().starts[selection.row + 1].length);
+    showDropGap(gap); return gap;
+  },
+  drop: placeLetter,
+  cancel: () => { selection = null; render(); announce('Drag cancelled; your board is unchanged'); }
+});
+
 $('#board').addEventListener('click', event => {
+  // Pointer users drag directly; Enter/Space provides the keyboard equivalent.
+  if (event.detail !== 0) return;
   const button = event.target.closest('button[data-action]');
-  if (!button || currentState().status !== 'playing') return;
+  if (!button || currentState().status !== 'playing' || revealing) return;
   const puzzle = currentPuzzle(), state = currentState();
   const action = button.dataset.action;
   if (action === 'letter' || action === 'received') {
     const row = Number(button.dataset.row) - (action === 'received' ? 1 : 0);
     const index = action === 'received' ? state.board[row].index : Number(button.dataset.index);
-    selection = selection?.row === row && selection.index === index ? null : { row, index };
+    selection = { row, index, keyboard: true };
     announce('');
     render();
-    if (selection && event.detail === 0) $('.slot')?.focus({ preventScroll: true });
+    keyboardGap = tokens(puzzle, state.board, row + 1).find(t => !t.received)?.index ?? 0;
+    showDropGap(keyboardGap); $('#board').focus({ preventScroll: true });
     return;
-  }
-  if (action === 'slot' && selection) {
-    const from = selection.row;
-    const letter = puzzle.starts[from][selection.index];
-    const changed = move(puzzle, state, from, selection.index, Number(button.dataset.gap));
-    selection = null;
-    if (changed) persist();
-    render();
-    announce(`${letter} passed to row ${from + 2}.`);
-    if (event.detail === 0) focusKey(`received-${from + 1}`);
   }
 });
 
 document.addEventListener('keydown', event => {
+  if (selection?.keyboard && ['ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key) && !$('dialog[open]')) {
+    event.preventDefault();
+    if (event.key === 'Enter' || event.key === ' ') { const row = placeLetter(keyboardGap); focusKey(`received-${row + 1}`); return; }
+    const positions = tokens(currentPuzzle(), currentState().board, selection.row + 1).filter(t => !t.received).map(t => t.index);
+    positions.push(currentPuzzle().starts[selection.row + 1].length);
+    keyboardGap = positions[Math.max(0, Math.min(positions.length - 1, positions.indexOf(keyboardGap) + (event.key === 'ArrowLeft' ? -1 : 1)))];
+    showDropGap(keyboardGap); return;
+  }
   if (event.key === 'Escape' && selection && !$('dialog[open]')) {
     const { row, index } = selection;
     selection = null;
     render();
-    focusKey(stateHasOutgoing(row, index) ? `sent-${row}` : `letter-${row}-${index}`);
+    focusKey(stateHasOutgoing(row, index) ? `received-${row + 1}` : `letter-${row}-${index}`);
     announce('Selection cancelled.');
   }
 });
@@ -163,14 +244,33 @@ $('#check').addEventListener('click', () => {
   if (outcome.kind === 'duplicate') { announce('Try a different arrangement; this one was already checked and won’t use another check.'); return; }
   if (outcome.kind === 'incomplete') return;
   persist();
+  revealing = true;
   render();
-  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? 'All six checks used; the solution is shown below.' : `${outcome.correct.filter(Boolean).length} of 4 clues matched; you can change any transfer.`);
-  if (currentState().status !== 'playing') $('#share-result').focus({ preventScroll: false });
+  clearTimeout(revealTimer);
+  playSound(preferences.sound, outcome.kind === 'won');
+  if (outcome.kind === 'won') {
+    $('.post-pal').classList.remove('happy');
+    requestAnimationFrame(() => $('.post-pal').classList.add('happy'));
+  }
+  revealTimer = setTimeout(() => {
+    revealing = false;
+    document.querySelectorAll('.checking').forEach(row => row.classList.remove('checking'));
+    $('#result').classList.remove('reveal-result');
+    $('#check').disabled = currentState().status !== 'playing' || !complete(currentState());
+    $('#undo').disabled = currentState().status !== 'playing' || !currentState().undo.length;
+    $('#reset').disabled = currentState().status !== 'playing' || currentState().board.every(m => !m);
+    if (currentState().status !== 'playing') {
+      $('#result').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      $('#share-result')?.focus({ preventScroll: true });
+    }
+  }, 850);
+  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? `All ${checkLimit(currentPuzzle())} checks used; the solution is shown below.` : `${outcome.correct.filter(Boolean).length} of 4 clues matched; you can change any transfer.`);
 });
 
 function openDialog(id) { $(id).showModal(); }
 $('#help-button').addEventListener('click', () => openDialog('#help-dialog'));
 $('#stats-button').addEventListener('click', () => { renderStats(); openDialog('#stats-dialog'); });
+$('#archive-button').addEventListener('click', openArchive);
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => {
   const rect = dialog.getBoundingClientRect();
@@ -180,6 +280,8 @@ document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('c
 function startPractice() {
   $('#help-dialog').close();
   practicing = true;
+  archivePuzzle = null;
+  history.replaceState(null, '', new URL('./', location.href));
   selection = null;
   announce('Practice is separate from your daily progress.');
   render();
@@ -189,6 +291,8 @@ $('#practice-button').addEventListener('click', startPractice);
 $('#unavailable-practice').addEventListener('click', startPractice);
 $('#exit-practice').addEventListener('click', () => {
   practicing = false;
+  archivePuzzle = null;
+  history.replaceState(null, '', new URL('./', location.href));
   selection = null;
   announce('');
   refreshDay();
@@ -204,15 +308,15 @@ function renderStats() {
 }
 
 async function share() {
-  const url = new URL('./', window.location.href).href;
+  const url = practicing ? new URL('./', location.href).href : puzzleLink(location.href, currentPuzzle().id);
   let text = shareText(currentPuzzle(), currentState(), url);
   if (practicing) text = text.replace('#practice', '· Practice');
   const delivery = await deliverShare(text, {
     nativeShare: navigator.share?.bind(navigator),
     copyText: navigator.clipboard?.writeText.bind(navigator.clipboard)
   });
-  if (delivery === 'shared') announce('Result shared. A good handoff.');
-  if (delivery === 'copied') announce('Result copied. Ready to pass it on.');
+  if (delivery === 'shared') announce('Result shared');
+  if (delivery === 'copied') announce('Copied your result and a link to this puzzle');
   if (delivery === 'selectable') {
     $('#share-text').value = text;
     openDialog('#share-dialog');
@@ -236,10 +340,11 @@ function refreshDay() {
   const next = dayIndex(START_DATE);
   if (next === today) return;
   today = next;
+  collectionWeek = Math.floor(Math.max(0, today) / 7);
   dailyPuzzle = PUZZLES[today];
   data = readStore();
   dailyState = dailyPuzzle ? restore(dailyPuzzle, data.daily[dailyPuzzle.id]) : null;
-  if (!practicing) {
+  if (!practicing && !archivePuzzle) {
     selection = null;
     render();
     announce(dailyPuzzle ? 'It’s a new UTC day. Your next relay is ready.' : 'No new daily relay is scheduled. Practice is still available.');
@@ -251,10 +356,73 @@ window.addEventListener('storage', event => {
   if (event.key !== STORAGE_KEY) return;
   data = readStore();
   if (dailyPuzzle) dailyState = restore(dailyPuzzle, data.daily[dailyPuzzle.id]);
-  if (!practicing) { selection = null; render(); announce('Daily progress updated from another tab.'); }
+  if (archivePuzzle) archiveState = restore(archivePuzzle, data.archive?.[archivePuzzle.id]);
+  if (!practicing) { selection = null; render(); announce('Progress updated from another tab.'); }
   if ($('#stats-dialog').open) renderStats();
 });
 
-if (dailyState?.status !== 'playing') persist();
+function openArchive() {
+  const released = PUZZLES.slice(0, Math.max(0, today + 1));
+  const card = (p, index) => {
+    const saved = index === today && p.kind !== 'hard' ? data.daily[p.id] : data.archive?.[p.id] || data.daily[p.id];
+    const status = saved?.status === 'won' ? 'Solved' : saved?.status === 'lost' ? 'Finished' : saved ? 'In progress' : 'Play';
+    return `<button class="archive-card" data-puzzle="${p.id}"><strong>${index === null ? esc(p.title) : p.kind === 'hard' ? `Hard #${String(index + 1).padStart(3, '0')}` : `#${String(p.id).padStart(3, '0')}`}</strong><span>${index === null ? 'Bonus relay' : dateLabel(puzzleDate(START_DATE, index))}</span><small>${index === today && !saved ? 'Today' : status} · ${p.difficulty || 'Steady'}</small></button>`;
+  };
+  $('#archive-list').innerHTML = `${released.length ? '<h3>Daily relays</h3><div class="archive-grid">' + released.map((p, i) => card(p, i)).reverse().join('') + '</div>' : ''}<h3>Bonus collection</h3><div class="archive-grid">${BONUSES.map(p => card(p, null)).join('')}</div>${released.length ? '<h3>Daily challenges</h3><div class="archive-grid">' + CHALLENGES.slice(0, today + 1).map((p, i) => card(p, i)).reverse().join('') + '</div>' : ''}`;
+  openDialog('#archive-dialog');
+}
+
+function openPuzzle(puzzle, index) {
+  practicing = false; selection = null; revealing = false;
+  clearTimeout(revealTimer);
+  data = readStore();
+  if (index === today && puzzle.kind !== 'hard') {
+    archivePuzzle = null;
+    dailyState = restore(puzzle, data.daily[puzzle.id]);
+  } else {
+    archivePuzzle = puzzle; archiveIndex = index;
+    archiveState = restore(puzzle, data.archive?.[puzzle.id] || data.daily[puzzle.id]);
+  }
+  history.replaceState(null, '', puzzleLink(location.href, puzzle.id));
+  $('#archive-dialog').close();
+  announce(''); render(); $('#board').focus({ preventScroll: false });
+}
+
+$('#archive-list').addEventListener('click', event => {
+  const button = event.target.closest('[data-puzzle]');
+  if (!button) return;
+  const route = resolvePuzzleLink(`?puzzle=${button.dataset.puzzle}`, PUZZLES, BONUSES, today, CHALLENGES);
+  if (route) openPuzzle(route.puzzle, route.index);
+});
+
+function renderPostcard() {
+  const stamps = postcard(data.results, today, collectionWeek);
+  $('#postcard-dates').textContent = `${dateLabel(puzzleDate(START_DATE, stamps[0].day))} to ${dateLabel(puzzleDate(START_DATE, stamps[6].day))}`;
+  $('#stamp-count').textContent = `${stamps.filter(s => s.earned).length} of 7 collected`;
+  $('#stamps').innerHTML = stamps.map(s => `<div class="postage ${s.earned ? 'earned' : ''}${s.day === today ? ' today' : ''}" aria-label="${dateLabel(puzzleDate(START_DATE, s.day))}: ${s.earned ? 'stamp earned' : s.future ? 'upcoming' : 'not collected'}"><span aria-hidden="true">${s.earned ? '✉' : String(puzzleDate(START_DATE, s.day).getUTCDate())}</span><small>${new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(puzzleDate(START_DATE, s.day))}</small></div>`).join('');
+  $('#previous-week').disabled = collectionWeek === 0;
+  $('#next-week').disabled = collectionWeek >= Math.floor(Math.max(0, today) / 7);
+}
+$('#previous-week').addEventListener('click', () => { collectionWeek--; renderPostcard(); });
+$('#next-week').addEventListener('click', () => { collectionWeek++; renderPostcard(); });
+
+for (const option of ['sound']) {
+  $(`#${option}-setting`).checked = preferences[option];
+  $(`#${option}-setting`).addEventListener('change', event => {
+    preferences[option] = event.target.checked; savePreferences();
+    if (option === 'sound') playSound(preferences.sound);
+  });
+}
+
+const tutorial = installTutorial({
+  done: () => { preferences.tutorial = true; savePreferences(); },
+  sound: () => preferences.sound
+});
+$('#tutorial-button').addEventListener('click', () => { $('#help-dialog').close(); tutorial.open(); });
+
+if (dailyState && dailyState.status !== 'playing') persist();
+const linked = resolvePuzzleLink(location.search, PUZZLES, BONUSES, today, CHALLENGES);
+if (linked) openPuzzle(linked.puzzle, linked.index);
 render();
 warnStorage();
+if (!preferences.tutorial && !Object.keys(data.daily).length && !Object.keys(data.archive || {}).length) tutorial.open();

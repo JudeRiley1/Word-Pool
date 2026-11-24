@@ -1,4 +1,5 @@
 export const MAX_CHECKS = 6;
+export const checkLimit = puzzle => puzzle.maxChecks ?? MAX_CHECKS;
 export const DAY_MS = 86400000;
 export const copy = value => JSON.parse(JSON.stringify(value));
 export const emptyBoard = () => [null, null, null];
@@ -27,6 +28,19 @@ export function tokens(puzzle, board, row) {
 
 export const words = (puzzle, board) => puzzle.starts.map((_, row) => tokens(puzzle, board, row).map(t => t.letter).join(''));
 export const complete = state => state.board.every(Boolean);
+
+// Match exact positions first, then spend each remaining answer letter once.
+export function letterFeedback(word, answer) {
+  const colors = [...word].map((letter, i) => letter === answer[i] ? 'correct' : 'absent');
+  const remaining = new Map();
+  [...answer].forEach((letter, i) => { if (colors[i] !== 'correct') remaining.set(letter, (remaining.get(letter) || 0) + 1); });
+  [...word].forEach((letter, i) => {
+    if (colors[i] !== 'correct' && remaining.get(letter) > 0) {
+      colors[i] = 'present'; remaining.set(letter, remaining.get(letter) - 1);
+    }
+  });
+  return colors;
+}
 
 export function validBoard(puzzle, board) {
   return Array.isArray(board) && board.length === 3 && board.every((m, row) => m === null || (
@@ -67,12 +81,12 @@ export function check(puzzle, state) {
   const correct = currentWords.map((word, row) => word === puzzle.answers[row]);
   state.checks.push({ signature, correct });
   if (correct.every(Boolean)) state.status = 'won';
-  else if (state.checks.length === MAX_CHECKS) state.status = 'lost';
+  else if (state.checks.length === checkLimit(puzzle)) state.status = 'lost';
   return { kind: state.status, correct };
 }
 
 export function restore(puzzle, saved) {
-  if (!saved || !validBoard(puzzle, saved.board) || !Array.isArray(saved.checks) || saved.checks.length > 6) return newState();
+  if (!saved || !validBoard(puzzle, saved.board) || !Array.isArray(saved.checks) || saved.checks.length > checkLimit(puzzle)) return newState();
   const signatures = new Set();
   for (const c of saved.checks) {
     if (typeof c.signature !== 'string' || signatures.has(c.signature) || !Array.isArray(c.correct) || c.correct.length !== 4 || c.correct.some(v => typeof v !== 'boolean')) return newState();
@@ -83,7 +97,7 @@ export function restore(puzzle, saved) {
   const checks = copy(saved.checks);
   const wonAt = checks.findIndex(c => c.correct.every(Boolean));
   if (wonAt !== -1 && wonAt !== checks.length - 1) return newState();
-  const status = wonAt !== -1 ? 'won' : checks.length === 6 ? 'lost' : 'playing';
+  const status = wonAt !== -1 ? 'won' : checks.length === checkLimit(puzzle) ? 'lost' : 'playing';
   if (status !== 'playing' && words(puzzle, saved.board).join('|') !== checks.at(-1).signature) return newState();
   return {
     board: copy(saved.board), checks, status,
@@ -130,6 +144,6 @@ export function stats(results, today) {
 }
 
 export function shareText(puzzle, state, url) {
-  return `Letter Relay #${String(puzzle.id).padStart(3, '0')} · ${state.status === 'won' ? state.checks.length : 'X'}/6\n` +
-    state.checks.map(c => c.correct.map(v => v ? '●' : '○').join(' ')).join('\n') + `\n${url}`;
+  return `Letter Relay ${puzzle.title ? `· ${puzzle.title}` : `#${String(puzzle.id).padStart(3, '0')}`}\n${state.status === 'won' ? state.checks.length : 'X'}/${checkLimit(puzzle)} checks\n` +
+    [0, 1, 2, 3].map(row => state.checks.map(c => c.correct[row] ? '🟩' : '⬜').join('')).join('\n') + `\nPlay this relay: ${url}`;
 }

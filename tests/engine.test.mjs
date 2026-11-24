@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PUZZLES, PRACTICE, START_DATE } from '../puzzles.js';
+import { PUZZLES, PRACTICE, START_DATE, BONUSES, CHALLENGES } from '../puzzles.js';
 import { newState, copy, words, tokens, solve, move, undo, reset, check, restore, stats, dayIndex, shareText, validBoard } from '../engine.js';
 
 const orders = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
-for (const puzzle of [PRACTICE, ...PUZZLES]) {
+for (const puzzle of [PRACTICE, ...PUZZLES, ...BONUSES, ...CHALLENGES]) {
   test(`puzzle ${puzzle.id} solves through actual moves in all six orders`, () => {
     const solution = solve(puzzle)[0];
     assert.ok(solution, 'Must have a legal solution');
@@ -93,7 +93,8 @@ test('UTC rollover and schedule boundaries are independent of local timezone', (
   assert.equal(dayIndex(START_DATE, Date.parse('2026-11-24T00:00:00Z')), 0);
   assert.equal(dayIndex(START_DATE, Date.parse('2026-11-24T18:00:00-06:00')), 1);
   assert.equal(dayIndex(START_DATE, Date.parse('2026-12-23T23:59:59Z')), 29);
-  assert.equal(PUZZLES[dayIndex(START_DATE, Date.parse('2026-12-24T00:00:00Z'))], undefined);
+  assert.equal(PUZZLES[dayIndex(START_DATE, Date.parse('2026-12-24T00:00:00Z'))].id, 31);
+  assert.equal(PUZZLES[dayIndex(START_DATE, Date.parse('2027-02-22T00:00:00Z'))], undefined);
 });
 
 test('stats count wins, losses, gaps and streak grace on an unplayed current day', () => {
@@ -109,7 +110,7 @@ test('share format contains checks and link, with no answers or clues', () => {
   state.board = solve(puzzle)[0];
   check(puzzle, state);
   const text = shareText(puzzle, state, 'https://example.org/letter-relay/');
-  assert.equal(text, 'Letter Relay #001 · 1/6\n● ● ● ●\nhttps://example.org/letter-relay/');
+  assert.equal(text, 'Letter Relay #001\n1/6 checks\n🟩\n🟩\n🟩\n🟩\nPlay this relay: https://example.org/letter-relay/');
   for (const secret of [...puzzle.starts, ...puzzle.answers, ...puzzle.clues]) assert.ok(!text.includes(secret));
   state.status = 'lost';
   assert.match(shareText(puzzle, state, 'https://example.org/'), /X\/6/);

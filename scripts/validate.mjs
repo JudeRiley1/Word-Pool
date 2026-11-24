@@ -1,16 +1,23 @@
 import assert from 'node:assert/strict';
-import { PUZZLES, PRACTICE, START_DATE } from '../puzzles.js';
+import { PUZZLES, PRACTICE, START_DATE, BONUSES, CHALLENGES } from '../puzzles.js';
 import { solve, words, DAY_MS } from '../engine.js';
 
 const boards = new Set();
 const answers = new Set();
 const ids = new Set();
-assert.ok(PUZZLES.length >= 30, 'At least 30 launch puzzles are required');
-for (const puzzle of [PRACTICE, ...PUZZLES]) {
+assert.ok(PUZZLES.length >= 90, 'At least 90 daily puzzles are required');
+assert.ok(BONUSES.length >= 8, 'At least 8 bonus puzzles are required');
+assert.equal(CHALLENGES.length, PUZZLES.length, 'Every daily relay needs a hard challenge');
+for (const puzzle of [PRACTICE, ...PUZZLES, ...BONUSES, ...CHALLENGES]) {
   assert.ok(!ids.has(puzzle.id), `Repeated ID ${puzzle.id}`);
   ids.add(puzzle.id);
   for (const field of ['starts', 'clues', 'answers']) assert.equal(puzzle[field].length, 4);
   for (const word of [...puzzle.starts, ...puzzle.answers]) assert.match(word, /^[A-Z]{2,8}$/);
+  if (puzzle.kind === 'hard') {
+    assert.equal(puzzle.maxChecks, 4);
+    assert.deepEqual(puzzle.starts.map(w => w.length), [6,5,5,4]);
+    assert.deepEqual(puzzle.answers.map(w => w.length), [5,5,5,5]);
+  }
   for (const clue of puzzle.clues) assert.ok(clue.length >= 8 && clue.length <= 65, `Check clue length: ${clue}`);
   assert.equal(new Set(puzzle.clues).size, 4, `Repeated clue in ${puzzle.id}`);
   const startKey = puzzle.starts.join('|'), answerKey = puzzle.answers.join('|');
@@ -26,5 +33,5 @@ for (const puzzle of [PRACTICE, ...PUZZLES]) {
   console.log(`${String(puzzle.id).padStart(8)}  ${puzzle.starts.join(' / ')}  →  ${puzzle.answers.join(' / ')}  [${[...routes][0]}]`);
 }
 const last = new Date(Date.parse(`${START_DATE}T00:00:00Z`) + (PUZZLES.length - 1) * DAY_MS).toISOString().slice(0, 10);
-console.log(`\nAll ${PUZZLES.length} daily puzzles and the practice puzzle are valid. Schedule: ${START_DATE} through ${last} (UTC).`);
+console.log(`\nAll ${PUZZLES.length} daily puzzles, ${CHALLENGES.length} hard challenges, ${BONUSES.length} bonus puzzles and the practice puzzle are valid. Schedule: ${START_DATE} through ${last} (UTC).`);
 console.log('Clue meanings and common alternative answers are editorially reviewed; this validator checks structure, uniqueness and legal transfers.');
