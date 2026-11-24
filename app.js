@@ -413,16 +413,53 @@ window.addEventListener('storage', event => {
   if ($('#stats-dialog').open) renderStats();
 });
 
-function openArchive() {
+let archiveCollection = 'daily', archivePage = 0, archivePageSize = 6;
+function renderArchive() {
   const released = PUZZLES.slice(0, Math.max(0, today + 1));
-  const card = (p, index) => {
+  const entries = archiveCollection === 'bonus' ? BONUSES.map(p => ({ p, index: null })) :
+    (archiveCollection === 'hard' ? CHALLENGES.slice(0, released.length) : released).map((p, index) => ({ p, index })).reverse();
+  const list = $('#archive-list');
+  const columns = list.clientWidth >= 540 ? 3 : 2;
+  const rows = Math.max(1, Math.min(3, Math.floor((list.clientHeight + 8) / 88)));
+  archivePageSize = columns * rows;
+  const pages = Math.max(1, Math.ceil(entries.length / archivePageSize));
+  archivePage = Math.min(archivePage, pages - 1);
+  const card = ({ p, index }) => {
     const saved = index === today && p.kind !== 'hard' ? data.daily[p.id] : data.archive?.[p.id] || data.daily[p.id];
     const status = saved?.status === 'won' ? 'Solved' : saved?.status === 'lost' ? 'Finished' : saved ? 'In progress' : 'Play';
-    return `<button class="archive-card" data-puzzle="${p.id}"><strong>${index === null ? esc(p.title) : p.kind === 'hard' ? `Hard #${String(index + 1).padStart(3, '0')}` : `#${String(p.id).padStart(3, '0')}`}</strong><span>${index === null ? 'Bonus relay' : dateLabel(puzzleDate(START_DATE, index))}</span><small>${index === today && !saved ? 'Today' : status} · ${p.difficulty || 'Steady'}</small></button>`;
+    return `<button class="archive-card" data-puzzle="${p.id}"><strong>${index === null ? esc(p.title) : p.kind === 'hard' ? `Hard #${String(index + 1).padStart(3, '0')}` : `#${String(p.id).padStart(3, '0')}`}</strong><span>${index === null ? 'Bonus puzzle' : dateLabel(puzzleDate(START_DATE, index))}</span><small>${index === today && !saved ? 'Today' : status} &middot; ${p.difficulty || 'Steady'}</small></button>`;
   };
-  $('#archive-list').innerHTML = `${released.length ? '<h3>Daily relays</h3><div class="archive-grid">' + released.map((p, i) => card(p, i)).reverse().join('') + '</div>' : ''}<h3>Bonus collection</h3><div class="archive-grid">${BONUSES.map(p => card(p, null)).join('')}</div>${released.length ? '<h3>Daily challenges</h3><div class="archive-grid">' + CHALLENGES.slice(0, today + 1).map((p, i) => card(p, i)).reverse().join('') + '</div>' : ''}`;
-  openDialog('#archive-dialog');
+  list.innerHTML = entries.length ? `<div class="archive-grid" style="grid-template-columns:repeat(${columns},minmax(0,1fr))">${entries.slice(archivePage * archivePageSize, (archivePage + 1) * archivePageSize).map(card).join('')}</div>` : '<p class="archive-empty">No puzzles released yet</p>';
+  $('#archive-page').textContent = `${archivePage + 1} / ${pages}`;
+  $('#archive-prev').disabled = archivePage === 0;
+  $('#archive-next').disabled = archivePage === pages - 1;
 }
+function openArchive() {
+  openDialog('#archive-dialog');
+  renderArchive();
+}
+$('#archive-prev').addEventListener('click', () => { archivePage--; renderArchive(); });
+$('#archive-next').addEventListener('click', () => { archivePage++; renderArchive(); });
+new ResizeObserver(() => { if ($('#archive-dialog').open) renderArchive(); }).observe($('#archive-list'));
+document.querySelectorAll('.dialog-tabs').forEach(tabs => {
+  const buttons = [...tabs.querySelectorAll('[role="tab"]')];
+  const select = button => {
+    buttons.forEach(tab => { const active = tab === button; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; });
+    if (button.dataset.collection) {
+      archiveCollection = button.dataset.collection; archivePage = 0;
+      $('#archive-list').setAttribute('aria-labelledby', button.id); renderArchive();
+    } else buttons.forEach(tab => { document.getElementById(tab.getAttribute('aria-controls')).hidden = tab !== button; });
+  };
+  buttons.forEach((button, index) => {
+    button.addEventListener('click', () => select(button));
+    button.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      select(buttons[next]); buttons[next].focus();
+    });
+  });
+});
 
 function openPuzzle(puzzle, index) {
   practicing = false; selection = null; revealing = false;

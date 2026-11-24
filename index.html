@@ -60,22 +60,45 @@
     </main>
   </div>
 
-  <dialog id="help-dialog" aria-labelledby="help-title">
-    <div class="dialog-top"><span class="eyebrow">WORD POOL</span><button class="close-button" data-close aria-label="Close how to play">×</button></div>
-    <h2 id="help-title">How to play</h2>
-    <p>Turn each starting word into the answer to its clue. Send <strong>one original letter</strong> from each of the first three rows to the row below.</p>
-    <ol class="rules"><li><strong>Drag a letter down</strong><br>Move any original letter from one of the first three rows into the word below.</li><li><strong>Drop at the marker</strong><br>The line between letters shows the insertion point, and a preview shows the new word. Release outside the highlighted row to cancel.</li><li><strong>Check your words</strong><br>After three transfers, press Check words. You start with three lives. Each incorrect check costs one life, even if several words are wrong. Three wrong checks end the round. Correct checks and repeated identical guesses cost no lives. Your score is the lives you save, out of three. Green means the right letter and spot, yellow means the letter belongs elsewhere in the word, and gray means it is not needed.</li></ol>
-    <div class="rule-note">You can make transfers in any order. A received letter has a turquoise droplet marker. Drag it within its new row to reposition it, or back to its original row to cancel the transfer. It returns to its original spot. Drag a different original letter down to replace a transfer.</div>
-    <div class="practice-example" aria-label="Practice example: move G from GLASS to RAIN"><div><span class="example-sent">G</span><span>L</span><span>A</span><span>S</span><span>S</span></div><span class="example-arrow" aria-hidden="true">↓</span><div><span class="example-received">G</span><span class="example-sent">R</span><span>A</span><span>I</span><span>N</span></div><p>GLASS becomes LASS. RAIN becomes GAIN<br>when its R continues to the next row.</p></div>
-    <p class="keyboard-note"><strong>Keyboard:</strong> Tab to a letter and press Enter or Space to pick it up. Use Left and Right to choose a spot, then Enter to drop. Backspace returns a picked-up received letter to its original row. Escape cancels. On phones, scroll from the space outside the letter tiles.</p>
-    <p class="keyboard-note">Tap the platypus to enable phone tilt where permission is needed, or to recenter it around your current holding angle. You can also drag it.</p>
-    <button id="tutorial-button" class="secondary-button">Show the guided first move</button>
-    <button id="practice-button" class="primary-button">Try a practice relay</button><p class="dialog-fineprint">Practice as often as you like without affecting your daily stats</p>
+  <dialog id="help-dialog" class="compact-dialog" aria-labelledby="help-title">
+    <div class="compact-heading"><h2 id="help-title">How to play</h2><button class="close-button" data-close aria-label="Close help">&times;</button></div>
+    <div class="dialog-tabs" role="tablist" aria-label="Help topics">
+      <button id="help-play-tab" role="tab" aria-selected="true" aria-controls="help-play">The game</button>
+      <button id="help-controls-tab" role="tab" aria-selected="false" aria-controls="help-controls" tabindex="-1">Controls</button>
+    </div>
+    <section id="help-play" class="help-panel" role="tabpanel" aria-labelledby="help-play-tab">
+      <ol class="quick-rules">
+        <li><strong>Move three letters</strong><span>Drag one original letter from each of the first three rows into the word below</span></li>
+        <li><strong>Match all four clues</strong><span>Drop at the marker to build each answer, then tap Check words</span></li>
+        <li><strong>Keep your three lives</strong><span>Each wrong check costs one life; three ends the round. Repeated guesses are free. Score = lives saved</span></li>
+      </ol>
+      <div class="help-colors" aria-label="Letter feedback"><span><i class="right-color"></i>Right spot</span><span><i class="near-color"></i>Wrong spot</span><span><i class="wrong-color"></i>Not needed</span></div>
+    </section>
+    <section id="help-controls" class="help-panel" role="tabpanel" aria-labelledby="help-controls-tab" hidden>
+      <dl class="quick-controls">
+        <div><dt>Moving letters</dt><dd>Any order. Drop outside to cancel. A new original letter replaces the move</dd></div>
+        <div><dt>The droplet</dt><dd>Slide a droplet letter within its row or return it up, never farther down</dd></div>
+        <div><dt>Keyboard</dt><dd>Enter: pick up/drop. Arrows: position. Backspace: return. Esc: cancel</dd></div>
+        <div><dt>Pool &amp; sound</dt><dd>Tap pal: tilt/recenter. Note: mute music. Undo/Reset never refund lives</dd></div>
+      </dl>
+    </section>
+    <div class="help-actions"><button id="tutorial-button" class="secondary-button">Show me</button><button id="practice-button" class="primary-button">Practice</button></div>
+    <p class="compact-note">Practice keeps your daily stats safe</p>
   </dialog>
 
   <dialog id="stats-dialog" aria-labelledby="stats-title"><div class="dialog-top"><span class="eyebrow">YOUR DAILY RECORD</span><button class="close-button" data-close aria-label="Close statistics">×</button></div><h2 id="stats-title">Your stats</h2><div id="stats-content"></div><p class="dialog-fineprint">Daily results are saved in this browser</p></dialog>
 
-  <dialog id="archive-dialog" aria-labelledby="archive-title"><div class="dialog-top"><span class="eyebrow">MORE TO PLAY</span><button class="close-button" data-close aria-label="Close archive">×</button></div><h2 id="archive-title">The relay archive</h2><p>Play past daily puzzles and the bonus collection. Archive play does not change daily streaks or visits.</p><div id="archive-list"></div></dialog>
+  <dialog id="archive-dialog" class="compact-dialog" aria-labelledby="archive-title">
+    <div class="compact-heading"><h2 id="archive-title">The pool archive</h2><button class="close-button" data-close aria-label="Close archive">&times;</button></div>
+    <p class="compact-note">More puzzles, with your daily streak kept safe</p>
+    <div class="dialog-tabs" role="tablist" aria-label="Puzzle collections">
+      <button id="archive-daily-tab" role="tab" aria-selected="true" aria-controls="archive-list" data-collection="daily">Daily</button>
+      <button id="archive-hard-tab" role="tab" aria-selected="false" aria-controls="archive-list" data-collection="hard" tabindex="-1">Hard</button>
+      <button id="archive-bonus-tab" role="tab" aria-selected="false" aria-controls="archive-list" data-collection="bonus" tabindex="-1">Bonus</button>
+    </div>
+    <div id="archive-list" role="tabpanel" aria-labelledby="archive-daily-tab"></div>
+    <div class="archive-pager"><button id="archive-prev" class="secondary-button" aria-label="Previous puzzles">Back</button><span id="archive-page" role="status" aria-live="polite"></span><button id="archive-next" class="secondary-button" aria-label="Next puzzles">Next</button></div>
+  </dialog>
 
   <dialog id="tutorial-dialog" aria-labelledby="tutorial-title"><span class="eyebrow">TRY ONE HANDOFF</span><h2 id="tutorial-title">Meet Word Pool</h2><p id="tutorial-prompt" aria-live="polite"></p><div id="tutorial-board" class="drag-enabled" tabindex="-1"></div><p id="tutorial-explanation"></p><button id="tutorial-play" class="primary-button" hidden>Play the puzzle</button><button id="tutorial-skip" class="text-button">Skip to puzzle</button></dialog>
 
