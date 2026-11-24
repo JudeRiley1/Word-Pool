@@ -2,6 +2,8 @@
 
 A complete daily word puzzle in plain HTML, CSS and JavaScript. No dependencies, backend, account, build step, or API keys. Four starting words become four clue answers by passing one original letter from each of the first three rows to the next row.
 
+The **Bubble Post** theme gives the game a smiling mail mascot, pastel word stops, rounded letter tiles, and short delivery animations. The Fredoka and Nunito fonts are bundled locally in `assets/fonts/` with their SIL Open Font Licenses, so the live game makes no third-party font requests. Motion respects the browser’s reduced-motion preference.
+
 ## Run locally
 
 Install Node.js 22 or newer, then run:
@@ -48,7 +50,7 @@ The object above demonstrates the format using puzzle 1; **write a new puzzle in
 ## Controls and behavior
 
 - Tap/click an original letter, then a **+** insertion slot in the next row. Slots are labeled first, last, or after a letter.
-- Work in any order. Incomplete intermediate words are allowed. Received letters are green and underlined; they cannot be passed onward.
+- Work in any order. Incomplete intermediate words are allowed. Received letters are yellow and underlined; they cannot be passed onward.
 - Tap a received letter or **sent · edit** to reposition the transfer. Choose another original letter to replace that row’s outgoing letter; the previous one returns automatically.
 - Tab, Enter and Space operate every control. Escape cancels a letter selection. Dialogs support Escape and return focus to their opener.
 - Undo and Reset Board retain used checks. Reset can itself be undone. Any previously checked identical arrangement is free to resubmit, including equivalent repeated-letter arrangements.
@@ -77,4 +79,4 @@ Because this is a static client-side game, puzzle data is visible in source. The
 
 ## Verification
 
-The 45 automated tests cover all 31 puzzles in all six transfer orders, repeated-letter identity, incoming-letter protection, undo/reset, duplicate checks, six-check losses, serialized progress restoration, UTC boundaries, schedule exhaustion, statistics, and all sharing fallback branches. The puzzle validator also passes for every launch puzzle and practice. Desktop rendering and bottom-up transfers were exercised in Edge. Real-device mobile touch behavior and the native phone share sheet still need device verification; these are not claimed as completed browser tests.
+The 45 automated tests cover all 31 puzzles in all six transfer orders, repeated-letter identity, incoming-letter protection, undo/reset, duplicate checks, six-check losses, serialized progress restoration, UTC boundaries, schedule exhaustion, statistics, and all sharing fallback branches. The puzzle validator also passes for every launch puzzle and practice. The Bubble Post theme was visually checked in Edge on desktop and at 390px and 320px emulated mobile widths; practice selection, insertion, and the delivery counter were exercised at mobile width. Real-device touch behavior and the native phone share sheet still need device verification.

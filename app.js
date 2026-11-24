@@ -57,8 +57,10 @@ function render() {
     $('#unavailable-text').textContent = today < 0 ? `The first relay arrives on ${START_DATE} at midnight UTC. In the meantime, try a practice round.` : 'You’ve reached the end of our scheduled relays. More puzzles can be added soon. The practice relay is always here.';
     return;
   }
-  $('#puzzle-label').textContent = practicing ? 'YOUR PRACTICE BOARD' : `TODAY’S PUZZLE / ${String(puzzle.id).padStart(3, '0')}`;
+  $('#puzzle-label').textContent = practicing ? 'PRACTICE DELIVERY' : `TODAY’S DELIVERY #${String(puzzle.id).padStart(3, '0')}`;
+  $('#delivery-progress').textContent = `${state.board.filter(Boolean).length} / 3 delivered`;
   const ended = state.status !== 'playing';
+  $('#game').dataset.status = state.status;
   const signature = words(puzzle, state.board).join('|');
   const feedback = state.checks.find(c => c.signature === signature);
   $('#board').innerHTML = puzzle.starts.map((start, row) => {
@@ -82,8 +84,8 @@ function render() {
       }).join('')}</div></div>`;
     }
     return `<section class="puzzle-row${feedback?.correct[row] ? ' matched' : ''}" aria-label="Row ${row + 1}: ${esc(puzzle.clues[row])}">
-      <div class="row-word"><div class="row-meta"><span class="row-number">0${row + 1}</span><span class="starting-word">${start}</span>${outgoing ? ended ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : `<button class="sent-edit${selection?.row === row ? ' selected' : ''}" data-action="letter" data-row="${row}" data-index="${outgoing.index}" data-focus="sent-${row}" aria-label="Reposition ${start[outgoing.index]} sent from row ${row + 1}">${start[outgoing.index]} sent · edit</button>` : ''}</div><div class="tile-line">${tileHTML}</div></div>
-      <div class="clue-block"><span class="clue-label">MAKE IT MEAN</span><p class="clue">${esc(puzzle.clues[row])}</p>${feedback ? `<span class="row-status${feedback.correct[row] ? ' correct' : ''}">${feedback.correct[row] ? '✓ Clue matched' : '○ Not quite yet'}</span>` : ''}</div>
+      <div class="row-heading"><span class="row-number" aria-hidden="true">${row + 1}</span><div class="clue-block"><p class="clue">${esc(puzzle.clues[row])}</p>${feedback ? `<span class="row-status${feedback.correct[row] ? ' correct' : ''}">${feedback.correct[row] ? '✓ Clue matched!' : '○ Try another delivery'}</span>` : ''}</div></div>
+      <div class="row-word"><div class="tile-line">${tileHTML}</div><div class="row-meta"><span class="starting-word">From ${start}</span>${outgoing ? ended ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : `<button class="sent-edit${selection?.row === row ? ' selected' : ''}" data-action="letter" data-row="${row}" data-index="${outgoing.index}" data-focus="sent-${row}" aria-label="Reposition ${start[outgoing.index]} sent from row ${row + 1}">${start[outgoing.index]} sent · edit</button>` : ''}</div></div>
       ${slots}${row < 3 ? `<span class="flow${outgoing ? ' done' : ''}" aria-hidden="true">↓</span>` : ''}</section>`;
   }).join('');
   $('#undo').disabled = ended || !state.undo.length;
@@ -91,8 +93,8 @@ function render() {
   $('#check').disabled = ended || !complete(state);
   $('#check').innerHTML = ended ? state.status === 'won' ? 'Relay complete <span aria-hidden="true">✓</span>' : 'Relay finished' : 'Check relay <span aria-hidden="true">✓</span>';
   $('#checks-label').textContent = `${state.checks.length} of ${MAX_CHECKS} checks used`;
-  $('#check-dots').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}"></span>`).join('');
-  $('#instruction').textContent = ended ? 'Four words. One handoff. See you for the next relay.' : selection ? `Choose a + slot in row ${selection.row + 2}. Escape cancels.` : complete(state) ? 'All letters delivered. Ready to check your relay?' : 'Select a letter. Find its next home.';
+  $('#check-dots').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}">${i < state.checks.length ? '✓' : i + 1}</span>`).join('');
+  $('#instruction').textContent = ended ? 'That’s a wrap! Come back for your next delivery.' : selection ? `Pick a + slot in row ${selection.row + 2}. Escape cancels.` : complete(state) ? 'All letters delivered. Let’s check those clues!' : 'Tap a letter. Then pick a + slot in the next row.';
   renderResult(puzzle, state);
   if (active) focusKey(active);
 }
@@ -103,7 +105,7 @@ function renderResult(puzzle, state) {
   if (result.hidden) { result.innerHTML = ''; return; }
   const won = state.status === 'won';
   const solution = solve(puzzle)[0];
-  result.innerHTML = `<span class="eyebrow">${won ? 'A BEAUTIFUL HANDOFF' : 'THE FINISH LINE'}</span><h2 id="result-title">${won ? 'Everything in its place.' : 'Every relay teaches you something.'}</h2><p>${won ? `You connected all four words in <strong>${state.checks.length} ${state.checks.length === 1 ? 'check' : 'checks'}</strong>.` : 'Six checks used. Here’s how this relay comes together.'}</p><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
+  result.innerHTML = `${won ? '<div class="celebration" aria-hidden="true"><span>✦</span><span>★</span><span>✦</span></div>' : ''}<span class="eyebrow">${won ? 'SIGNED, SEALED, SOLVED!' : 'ONE FOR THE MAILBAG'}</span><h2 id="result-title">${won ? 'You delivered!' : 'Nice try, word explorer.'}</h2><p>${won ? `Four happy words, all in <strong>${state.checks.length} ${state.checks.length === 1 ? 'check' : 'checks'}</strong>.` : 'Six checks used. Here’s the route these letters took.'}</p><div class="solution-words" aria-label="Solution words">${puzzle.answers.map(a => `<span>${a}</span>`).join('')}</div>
     ${!won ? `<ol class="transfer-summary">${solution.map((m, row) => `<li><strong>${puzzle.starts[row][m.index]}</strong> from ${puzzle.starts[row]} to ${puzzle.starts[row + 1]} → ${puzzle.answers[row + 1]}</li>`).join('')}</ol>` : ''}
     <button class="primary-button" id="share-result">Share result <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="10" r="2"/><circle cx="15" cy="4" r="2"/><circle cx="15" cy="16" r="2"/><path d="m7 9 6-4M7 11l6 4"/></svg></button>
     ${practicing ? '<button class="text-button" id="replay-practice">Play practice again</button>' : '<p>Next daily relay<span id="countdown" class="countdown"></span><span id="next-note"></span></p>'}`;
