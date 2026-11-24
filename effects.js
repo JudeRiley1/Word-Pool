@@ -26,7 +26,14 @@ export function animateHandoff(before, movingKey, root = document) {
       ], { duration: 330, easing: 'cubic-bezier(.25,.8,.25,1)', fill: 'forwards' });
       animation.finished.catch(() => {}).finally(() => {
         ghost.remove(); tile.style.visibility = '';
-        if (tile.isConnected) tile.animate([{ transform: 'scale(1.12,.9)' }, { transform: 'scale(.97,1.04)' }, { transform: 'scale(1)' }], { duration: 220 });
+        if (tile.isConnected) {
+          tile.animate([{ transform: 'scale(1.12,.9)' }, { transform: 'scale(.97,1.04)' }, { transform: 'scale(1)' }], { duration: 220 });
+          if (tile.classList.contains('received') && document.documentElement.dataset.theme === 'pool' && !reducedMotion()) {
+            const splash = document.createElement('span');
+            splash.className = 'tile-splash'; splash.setAttribute('aria-hidden', 'true'); tile.append(splash);
+            setTimeout(() => splash.remove(), 550);
+          }
+        }
       });
     } else {
       tile.animate([{ transform: `translate(${old.left - dest.left}px, ${old.top - dest.top}px)` }, { transform: 'translate(0,0)' }], { duration: 280, easing: 'ease-out' });
