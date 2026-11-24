@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f3f0fa">
+<title>Try the themes | Letter Relay</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f0fa;color:#302744;font:16px/1.5 Nunito,Arial,sans-serif}header.preview-header{padding:20px 16px 12px;text-align:center;background:#f3f0fa}h1{font-size:24px;margin:6px 0}p{margin:6px 0 14px}a{color:#5941a5}nav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#f3f0faf5;position:sticky;top:0;z-index:30;border-bottom:1px solid #dcd5ed}nav button{font:800 15px/1.3 Nunito,Arial,sans-serif;border:2px solid #d4c9e8;background:#fff;color:#493366;padding:12px 18px;border-radius:14px;cursor:pointer}nav button[aria-pressed="true"]{background:#5941a5;color:#fff;border-color:#5941a5}button:focus-visible,a:focus-visible{outline:3px solid #ef9650;outline-offset:4px}[hidden]{display:none!important}#relay-theme-preview .lr-stage{min-height:0;padding-bottom:35px}.preview-note{padding:0 16px 28px;text-align:center;font-size:14px}@media(max-width:380px){nav{gap:5px;padding:8px}nav button{padding:11px 8px;font-size:14px}}
+</style>
+</head>
+<body>
+<header class="preview-header"><a href="./">Back to Letter Relay</a><h1>Pick your flavor</h1><p>Try each look, drag the letters, and play the win animation</p></header>
+<nav aria-label="Choose a theme">
+<button type="button" data-theme-choice="Soda Shop" aria-pressed="true">Soda Shop</button>
+<button type="button" data-theme-choice="Poolside" aria-pressed="false">Poolside</button>
+<button type="button" data-theme-choice="Sticker Club" aria-pressed="false">Sticker Club</button>
+</nav>
+<main>
+<div id="relay-theme-preview" class="theme-preview" aria-label="Letter Relay theme concepts">
+  <section data-variant="Soda Shop"><div class="lr-stage"><div class="lr-game soda" data-theme="soda" aria-label="Soda Shop game preview"></div></div></section>
+  <section data-variant="Poolside" hidden><div class="lr-stage"><div class="lr-game pool" data-theme="pool" aria-label="Poolside game preview"></div></div></section>
+  <section data-variant="Sticker Club" hidden><div class="lr-stage"><div class="lr-game sticker" data-theme="sticker" aria-label="Sticker Club game preview"></div></div></section>
+</div>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@600;700;800;900&display=swap');
+#relay-theme-preview .lr-stage{min-height:760px;display:flex;align-items:flex-start;justify-content:center;padding:12px 8px 24px;box-sizing:border-box}
+#relay-theme-preview .lr-game{--ink:#45252c;--paper:#fff9ec;--accent:#cf3758;--edge:#e8b5aa;--tile:#fffdf6;position:relative;isolation:isolate;width:100%;max-width:440px;min-width:0;border-radius:30px;overflow:hidden;background:var(--paper);color:var(--ink);font:800 14px/1.4 Nunito,Arial,sans-serif;box-shadow:0 14px 40px #00000016;box-sizing:border-box}
+#relay-theme-preview .lr-game *{box-sizing:border-box}
+#relay-theme-preview .awning{height:22px;background:repeating-linear-gradient(90deg,#e84c68 0 24px,#fff9ec 24px 48px);border-bottom:3px solid #45252c12}
+#relay-theme-preview .mast{padding:18px 22px 14px;text-align:center}
+#relay-theme-preview .eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+#relay-theme-preview .logo{font:600 40px/1.15 Fredoka,Arial,sans-serif;letter-spacing:-1.5px;margin:3px 0 8px}
+#relay-theme-preview .logo span{display:inline-block;transform:rotate(-6deg);color:var(--accent)}
+#relay-theme-preview .palette{display:flex;justify-content:center;gap:8px;font-size:12px;font-weight:700}
+#relay-theme-preview .palette i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;border:1px solid #0002}
+#relay-theme-preview .meta{display:flex;justify-content:space-between;padding:10px 20px;font-size:12px;border-top:1px solid var(--edge)}
+#relay-theme-preview .board{position:relative;padding:0 14px;display:grid;gap:11px}
+#relay-theme-preview .row{position:relative;padding:10px 12px 14px;background:#fffdf6;border:2px solid var(--edge);border-radius:18px;transition:background .16s,border-color .16s,box-shadow .16s}
+#relay-theme-preview .clue{display:flex;align-items:center;gap:7px;margin-bottom:9px;font-size:13px}
+#relay-theme-preview .num{display:grid;place-items:center;background:var(--paper);color:var(--accent);width:22px;height:22px;border-radius:50%;font-size:12px}
+#relay-theme-preview .word{display:flex;justify-content:center;gap:7px;min-height:45px;position:relative}
+#relay-theme-preview .letter{width:43px;height:43px;flex-shrink:1;min-width:0;border-radius:12px;border:2px solid var(--edge);background:var(--tile);box-shadow:0 4px 0 var(--edge);color:var(--ink);font:600 25px/1 Fredoka,Arial,sans-serif;padding:0;display:grid;place-items:center;user-select:none;-webkit-user-select:none;position:relative}
+#relay-theme-preview button{font-family:inherit}
+#relay-theme-preview .letter[data-move]{cursor:grab;touch-action:none;border-color:var(--accent);box-shadow:0 4px 0 var(--accent)}
+#relay-theme-preview .letter[data-move]:active{cursor:grabbing}
+#relay-theme-preview .letter.received:after{content:'';position:absolute;width:5px;height:5px;background:var(--accent);border-radius:50%;bottom:3px}
+#relay-theme-preview .row.target{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+#relay-theme-preview .row.target .word:before{content:'';height:45px;width:6px;background:var(--accent);border-radius:8px;align-self:center}
+#relay-theme-preview .row.correct{border-color:#3a8a65;background:#e5f4e8}
+#relay-theme-preview .row.correct .letter{background:#4a976e;border-color:#317652;box-shadow:0 4px 0 #317652;color:#fff}
+#relay-theme-preview .footer{padding:16px 18px 18px;text-align:center}
+#relay-theme-preview .status{min-height:20px;font-size:12px;color:var(--ink);margin-bottom:11px}
+#relay-theme-preview .actions{display:flex;gap:9px;justify-content:center}
+#relay-theme-preview .play,#relay-theme-preview .sound{border:0;border-radius:16px;min-height:44px;padding:10px 17px;font:900 14px/1.2 Nunito,Arial,sans-serif;cursor:pointer}
+#relay-theme-preview .play{background:var(--accent);color:#fff;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 75%,#000)}
+#relay-theme-preview .sound{background:var(--tile);color:var(--ink);border:1px solid var(--edge)}
+#relay-theme-preview .play:active{transform:translateY(3px);box-shadow:0 1px 0 var(--accent)}
+#relay-theme-preview .motion-label{font-size:11px;margin-top:13px;opacity:.75}
+#relay-theme-preview .float-letter{position:absolute;z-index:10;pointer-events:none;margin:0;box-shadow:0 12px 20px #0002;transform:rotate(-8deg) scale(1.1)}
+#relay-theme-preview .particle{position:absolute;pointer-events:none;z-index:8}
+#relay-theme-preview .pool{--ink:#123d52;--paper:#dff5f6;--accent:#087d91;--edge:#aad9df;--tile:#fff; border-radius:32px;background:linear-gradient(160deg,#e7f8fa 45%,#c3ebef)}
+#relay-theme-preview .pool .awning{height:14px;border:0;background:repeating-linear-gradient(90deg,#0c8ca3 0 36px,#f3cf67 36px 72px)}
+#relay-theme-preview .pool .logo{font-weight:500;letter-spacing:-1px}
+#relay-theme-preview .pool .logo span{color:#dc7854;transform:rotate(7deg)}
+#relay-theme-preview .pool .row{border:0;border-radius:24px;background:#ffffffbd;box-shadow:0 5px 0 #89c6d040;padding:12px 14px 15px}
+#relay-theme-preview .pool .letter{border:0;border-radius:16px;box-shadow:0 5px 0 #afd7df,0 8px 12px #07506210;background:linear-gradient(#fff,#eefbfd)}
+#relay-theme-preview .pool .letter[data-move]{box-shadow:0 5px 0 #51aeba,0 0 0 2px #087d91}
+#relay-theme-preview .pool .row.target{background:#c8edf2;box-shadow:0 0 0 3px #087d91}
+#relay-theme-preview .pool .row.correct{background:#d3efe0}
+#relay-theme-preview .pool .row.correct .letter{background:#448a6a;box-shadow:0 5px 0 #286b4d}
+#relay-theme-preview .pool .play{border-radius:25px}
+#relay-theme-preview .sticker{--ink:#26243c;--paper:#faf3da;--accent:#6651cd;--edge:#302c46;--tile:#fffef6;border-radius:18px;background-color:#faf3da;background-image:radial-gradient(#c5bda6 1px,transparent 1px);background-size:15px 15px;border:2px solid #302c46;box-shadow:7px 7px 0 #302c46}
+#relay-theme-preview .sticker .awning{height:16px;background:#a8e4a2;border-bottom:2px solid #302c46}
+#relay-theme-preview .sticker .eyebrow{display:inline-block;background:#f7cd53;border:2px solid #302c46;transform:rotate(-4deg);padding:3px 9px;color:#302c46;letter-spacing:1px}
+#relay-theme-preview .sticker .logo{margin-top:10px;font-size:38px;text-shadow:2px 2px 0 #c4b4f5}
+#relay-theme-preview .sticker .logo span{transform:rotate(-9deg);color:#6651cd}
+#relay-theme-preview .sticker .row{border:2px solid #302c46;border-radius:8px;box-shadow:3px 3px 0 #302c46;background:#fffef5}
+#relay-theme-preview .sticker .row:nth-child(2){transform:rotate(-1deg);background:#e8e0fa}
+#relay-theme-preview .sticker .row:nth-child(3){transform:rotate(1deg);background:#fbe0d5}
+#relay-theme-preview .sticker .letter{border-radius:6px;border:2px solid #302c46;box-shadow:2px 3px 0 #302c46}
+#relay-theme-preview .sticker .letter[data-move]{background:#f8d85f;box-shadow:2px 3px 0 #302c46;border-color:#302c46}
+#relay-theme-preview .sticker .row.target{background:#dcd0fa;box-shadow:4px 4px 0 #6651cd}
+#relay-theme-preview .sticker .row.correct{background:#bde4b4}
+#relay-theme-preview .sticker .play{border:2px solid #302c46;box-shadow:3px 4px 0 #302c46;border-radius:8px}
+#relay-theme-preview .sticker .sound{border:2px solid #302c46;border-radius:8px}
+@media(max-width:380px){#relay-theme-preview .lr-stage{padding:8px 4px 20px}#relay-theme-preview .mast{padding:16px 10px 12px}#relay-theme-preview .logo{font-size:34px}#relay-theme-preview .board{padding:0 10px}#relay-theme-preview .word{gap:5px}#relay-theme-preview .letter{width:39px;height:43px}#relay-theme-preview .actions{gap:6px}#relay-theme-preview .play,#relay-theme-preview .sound{padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){#relay-theme-preview *{transition:none!important;animation:none!important}}
+</style>
+<script>
+(() => {
+const root=document.getElementById('relay-theme-preview');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const themes={soda:{name:'Soda Shop',palette:[['Cherry','#cf3758'],['Cream','#fff9ec'],['Mint','#a7d8bd']],motion:'Squishy tiles · Fizzy pops · Bubble finish'},pool:{name:'Poolside',palette:[['Aqua','#087d91'],['Sky','#c3ebef'],['Coral','#dc7854']],motion:'Floating tiles · Water ripples · Soft plunks'},sticker:{name:'Sticker Club',palette:[['Grape','#6651cd'],['Butter','#f8d85f'],['Peach','#f5c5b0']],motion:'Peel and stick · Paper snaps · Sticker shower'}};
+const originals=['GLASS','RAIN','COW','RATE'];
+const clues=['A girl','Obtain','Paddle a boat','A wooden box'];
+let audioContext;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+root.querySelectorAll('.lr-game').forEach(game=>{
+ const theme=game.dataset.theme, design=themes[theme];
+ let moved=[false,false,false], sound=false, busy=false, dragging=null;
+ const config={motion:1};
+ game.innerHTML=`<div class="awning" aria-hidden="true"></div><header class="mast"><div class="eyebrow">${design.name}</div><div class="logo">Letter <span>Relay</span></div><div class="palette">${design.palette.map(([label,color])=>`<span><i style="background:${color}"></i>${label}</span>`).join('')}</div></header><div class="meta"><span>DAILY #001</span><span class="count">0 / 3 delivered</span></div><div class="board"></div><footer class="footer"><div class="status" aria-live="polite">Drag G into row 2, or play the full relay</div><div class="actions"><button type="button" class="play">Play relay</button><button type="button" class="sound" aria-pressed="false">Sound off</button></div><div class="motion-label">${design.motion}</div></footer>`;
+ const board=game.querySelector('.board'),status=game.querySelector('.status'),play=game.querySelector('.play');
+ function letters(row){const result=[];if(row>0&&moved[row-1])result.push({char:originals[row-1][0],move:row-1,received:true});originals[row].split('').forEach((char,index)=>{if(index===0&&row<3&&moved[row])return;result.push({char,move:index===0&&row<3?row:null,received:false});});return result;}
+ function render(){board.innerHTML=originals.map((_,row)=>`<div class="row" data-row="${row}"><div class="clue"><span class="num">${row+1}</span>${clues[row]}</div><div class="word">${letters(row).map(t=>t.move!==null?`<button type="button" class="letter ${t.received?'received':''}" data-move="${t.move}" aria-label="${t.received?'Return':'Move'} ${t.char}">${t.char}</button>`:`<span class="letter">${t.char}</span>`).join('')}</div></div>`).join('');game.querySelector('.count').textContent=`${moved.filter(Boolean).length} / 3 delivered`;}
+ function animate(el,frames,ms=420,delay=0){if(reduce||!el||config.motion===0)return null;return el.animate(frames,{duration:ms*config.motion,delay:delay*config.motion,easing:'cubic-bezier(.2,.8,.2,1)',fill:'none'});}
+ function tone(win=false){if(!sound)return;try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();audioContext.resume();const now=audioContext.currentTime;const notes=win?[523.25,659.25,783.99]:[theme==='pool'?390:theme==='sticker'?650:540];notes.forEach((frequency,i)=>{const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type=theme==='sticker'?'triangle':'sine';osc.frequency.setValueAtTime(frequency,now+i*.09);if(!win)osc.frequency.exponentialRampToValueAtTime(theme==='pool'?210:frequency*1.6,now+.12);gain.gain.setValueAtTime(.0001,now+i*.09);gain.gain.exponentialRampToValueAtTime(.07,now+i*.09+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+i*.09+.22);osc.connect(gain);gain.connect(audioContext.destination);osc.start(now+i*.09);osc.stop(now+i*.09+.24);});}catch{sound=false;game.querySelector('.sound').textContent='Sound unavailable';}}
+ function burst(row,win=false){if(reduce||config.motion===0)return;const target=board.querySelector(`[data-row="${row}"]`),rect=target.getBoundingClientRect(),base=game.getBoundingClientRect();const cx=rect.left-base.left+rect.width/2,cy=rect.top-base.top+rect.height*.7;const n=theme==='pool'?3:win?20:9;for(let i=0;i<n;i++){const p=document.createElement('span');p.className='particle';const size=theme==='pool'?30:theme==='soda'?6+Math.random()*9:8+Math.random()*8;p.style.cssText=`left:${cx-size/2}px;top:${cy-size/2}px;width:${size}px;height:${size}px;`;if(theme==='pool'){p.style.border='2px solid #38aabc';p.style.borderRadius='50%';}else{p.style.background=design.palette[i%3][1];p.style.border=theme==='sticker'?'1px solid #302c46':'1px solid #cf375866';p.style.borderRadius=theme==='soda'?'50%':'2px';}game.append(p);const angle=i/n*Math.PI*2,dist=win?80+Math.random()*90:35+Math.random()*45;const frames=theme==='pool'?[{transform:'scale(.4)',opacity:.7},{transform:`scale(${win?10:6})`,opacity:0}]:[{transform:'translate(0,0) scale(.5)',opacity:1},{transform:`translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist-35}px) rotate(${i*50}deg) scale(1)`,opacity:0}];const anim=animate(p,frames,theme==='pool'?900:700,i*(theme==='pool'?90:5));anim?anim.finished.catch(()=>{}).then(()=>p.remove()):p.remove();}}
+ async function move(index,back=false,startRect=null){const old=new Map([...board.querySelectorAll('.letter')].map((el,i)=>[`${el.closest('.row').dataset.row}:${i}`,el.getBoundingClientRect()]));moved[index]=!back;render();const tile=board.querySelector(`[data-move="${index}"]`);if(startRect&&tile){const to=tile.getBoundingClientRect();animate(tile,[{transform:`translate(${startRect.left-to.left}px,${startRect.top-to.top}px) rotate(-8deg) scale(1.1)`},{transform:theme==='sticker'?'rotate(4deg) scale(1.08)':theme==='pool'?'translateY(6px) scale(1.02)':'scale(1.2,.8)',offset:.75},{transform:'none'}],440);}else{animate(tile,theme==='soda'?[{transform:'scale(.7,1.3)'},{transform:'scale(1.18,.82)',offset:.55},{transform:'none'}]:theme==='pool'?[{transform:'translateY(-18px)'},{transform:'translateY(7px)',offset:.55},{transform:'none'}]:[{transform:'rotate(-18deg) scale(1.3)',opacity:.4},{transform:'rotate(5deg) scale(1.05)',offset:.7},{transform:'none',opacity:1}],450);}
+ burst(back?index:index+1);tone();status.textContent=back?'Letter returned':moved.every(Boolean)?'All three delivered':'Drag the next letter down';if(moved.every(Boolean))await finish();}
+ async function finish(){busy=true;await pause(reduce?0:350);const rows=[...board.querySelectorAll('.row')];for(const row of rows){row.classList.add('correct');animate(row,[{transform:'scale(1)'},{transform:'scale(1.025)',offset:.5},{transform:'scale(1)'}],300);await pause(reduce?0:100);}status.textContent=theme==='soda'?'Sweet finish!':theme==='pool'?'Smooth sailing!':'Stuck the landing!';burst(1,true);tone(true);play.textContent='Replay relay';busy=false;}
+ async function demo(){if(busy||dragging)return;busy=true;moved=[false,false,false];render();status.textContent='Pass it on';for(let i=0;i<3;i++){const from=board.querySelector(`[data-move="${i}"]`).getBoundingClientRect();await pause(reduce?0:350);await move(i,false,from);}busy=false;}
+ play.addEventListener('click',demo);
+ game.querySelector('.sound').addEventListener('click',event=>{sound=!sound;event.currentTarget.textContent=sound?'Sound on':'Sound off';event.currentTarget.setAttribute('aria-pressed',String(sound));if(sound)tone();});
+ board.addEventListener('pointerdown',event=>{const tile=event.target.closest('button[data-move]');if(!tile||busy||event.button!==0)return;event.preventDefault();const index=Number(tile.dataset.move),back=moved[index],rect=tile.getBoundingClientRect();const ghost=tile.cloneNode(true);ghost.removeAttribute('data-move');ghost.removeAttribute('aria-label');ghost.setAttribute('aria-hidden','true');ghost.classList.add('float-letter');ghost.style.width=rect.width+'px';game.append(ghost);tile.style.opacity='.25';dragging={index,back,tile,ghost,pointer:event.pointerId,target:back?index:index+1,over:false};board.setPointerCapture(event.pointerId);position(event);});
+ function position(event){if(!dragging)return;const base=game.getBoundingClientRect();dragging.ghost.style.left=event.clientX-base.left-22+'px';dragging.ghost.style.top=event.clientY-base.top-24+'px';const target=board.querySelector(`[data-row="${dragging.target}"]`),r=target.getBoundingClientRect();dragging.over=event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom;target.classList.toggle('target',dragging.over);status.textContent=dragging.over?(dragging.back?'Return to original spot':'Drop at the highlighted spot'):'Drag into the row '+(dragging.back?'above':'below');}
+ board.addEventListener('pointermove',position);
+ function cancel(){if(!dragging)return;dragging.ghost.remove();dragging.tile.style.opacity='';board.querySelectorAll('.target').forEach(el=>el.classList.remove('target'));dragging=null;}
+ board.addEventListener('pointerup',event=>{if(!dragging)return;const {index,back,over,ghost}=dragging,rect=ghost.getBoundingClientRect();cancel();if(board.hasPointerCapture(event.pointerId))board.releasePointerCapture(event.pointerId);if(over)move(index,back,rect);else status.textContent='Drag G into row 2, or play the full relay';});
+ board.addEventListener('pointercancel',cancel);
+ board.addEventListener('keydown',event=>{if(event.key==='Escape')cancel();if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-move]')&&!busy){event.preventDefault();const index=Number(event.target.dataset.move);move(index,moved[index]);}});
+ render();
+ if(globalThis.Tweak){const tweak=new Tweak({container:game,onChange:()=>{}});tweak.addSlider(config,'motion',{label:'Animation duration',min:0,max:1.5,step:.25});}
+});
+})();
+</script>
+
+</main>
+<p class="preview-note">Theme previews only ? Your daily progress stays saved</p>
+<script>
+(() => {
+const choices=[...document.querySelectorAll('[data-theme-choice]')];
+const variants=[...document.querySelectorAll('[data-variant]')];
+function selectTheme(name){
+ if(!variants.some(section=>section.dataset.variant===name))name='Soda Shop';
+ variants.forEach(section=>section.hidden=section.dataset.variant!==name);
+ choices.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeChoice===name)));
+ document.title=name+' preview | Letter Relay';
+}
+choices.forEach(button=>button.addEventListener('click',()=>{
+ const name=button.dataset.themeChoice;
+ selectTheme(name);
+ history.replaceState(null,'','#'+encodeURIComponent(name));
+}));
+try{selectTheme(decodeURIComponent(location.hash.slice(1)));}catch{selectTheme('Soda Shop');}
+})();
+</script>
+</body>
+</html>

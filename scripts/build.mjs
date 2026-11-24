@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(import.meta.dirname, '..');
-const files = ['index.html', 'styles.css', 'app.js', 'engine.js', 'sharing.js', 'progression.js', 'effects.js', 'tutorial.js', 'puzzles.js', 'favicon.svg', '.nojekyll'];
+const files = ['index.html', 'themes.html', 'styles.css', 'app.js', 'engine.js', 'sharing.js', 'progression.js', 'effects.js', 'tutorial.js', 'puzzles.js', 'favicon.svg', '.nojekyll'];
 
 export async function buildSite(output = resolve(root, 'public')) {
   const sources = await Promise.all(files.map(async name => (await readFile(resolve(root, name), 'utf8')).replace(/\r\n/g, '\n')));
