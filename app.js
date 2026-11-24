@@ -1,5 +1,5 @@
 import { START_DATE, PUZZLES, PRACTICE, BONUSES, CHALLENGES } from './puzzles.js';
-import { livesRemaining, score, DAY_MS, newState, dayIndex, tokens, words, complete, move, recall, undo, reset, check, restore, solve, stats, shareText, letterFeedback } from './engine.js';
+import { livesRemaining, score, DAY_MS, newState, dayIndex, tokens, words, complete, move, recall, undo, reset, check, restore, solve, stats, shareText, letterFeedback, tileFeedback, nextAttempt } from './engine.js';
 import { deliverShare } from './sharing.js';
 import { puzzleDate, resolvePuzzleLink, puzzleLink, postcard, saveProgress, insertionGap } from './progression.js';
 import { captureTiles, animateHandoff, playSound, installDrag } from './effects.js';
@@ -38,6 +38,7 @@ if (typeof preferences !== 'object' || Array.isArray(preferences)) preferences =
 preferences.sound = true;
 let revealing = false;
 let revealTimer;
+let review = null;
 let selection = null;
 let keyboardGap = 0;
 const currentPuzzle = () => practicing ? PRACTICE : archivePuzzle || dailyPuzzle;
@@ -66,8 +67,15 @@ function persist() {
 function announce(message) { $('#message').textContent = message; }
 function focusKey(key) { document.querySelector(`[data-focus="${key}"]`)?.focus({ preventScroll: true }); }
 
+function stopReview() {
+  clearTimeout(revealTimer);
+  revealing = false;
+  review = null;
+}
+
 function render() {
-  const puzzle = currentPuzzle(), state = currentState();
+  const puzzle = currentPuzzle(), savedState = currentState();
+  const state = review?.state === savedState ? { ...savedState, board: review.board } : savedState;
   const active = document.activeElement?.dataset?.focus;
   $('#edition').textContent = practicing ? 'PRACTICE' : puzzle?.kind === 'hard' ? 'DAILY CHALLENGE' : archivePuzzle ? 'FROM THE ARCHIVE' : 'DAILY WORD PUZZLE';
   $('#puzzle-date').textContent = archivePuzzle && archiveIndex === null ? 'BONUS COLLECTION' : dateLabel(puzzleDate(START_DATE, archivePuzzle ? archiveIndex : today)).toUpperCase();
@@ -91,6 +99,9 @@ function render() {
   $('#board').classList.add('drag-enabled');
   const signature = words(puzzle, state.board).join('|');
   const feedback = state.checks.find(c => c.signature === signature);
+  const remembered = tileFeedback(puzzle, state);
+  $('#feedback-note').hidden = ended || !state.feedbackBoard;
+  $('#feedback-note').textContent = revealing ? 'Review the colors. Letters return to the start for your next attempt.' : 'Last-check colors follow each letter. They describe its last tested spot.';
   $('#board').innerHTML = puzzle.starts.map((start, row) => {
     const outgoing = state.board[row];
     const receiving = selection && selection.row + 1 === row;
@@ -100,9 +111,11 @@ function render() {
     const tileHTML = rowTokens.map((token, position) => {
       const selected = token.received ? selection?.row === row - 1 && selection.index === state.board[row - 1]?.index : selection?.row === row && selection.index === token.index;
       const interactive = !ended && (token.received || row < 3);
-      const cls = `tile${token.received ? ' received' : ''}${selected ? ' selected' : ''}${colors ? ` letter-${colors[position]}` : ''}`;
-      const feedbackLabel = colors ? `, ${colors[position] === 'correct' ? 'right letter and spot' : colors[position] === 'present' ? 'right letter, wrong spot' : 'letter not needed'}` : '';
       const tileKey = token.received ? `${row - 1}-${state.board[row - 1].index}` : `${row}-${token.index}`;
+      const previous = remembered[tileKey];
+      const color = colors?.[position] ?? previous?.color;
+      const cls = `tile${token.received ? ' received' : ''}${selected ? ' selected' : ''}${color ? ` letter-${color}` : ''}`;
+      const feedbackLabel = color ? `, ${colors ? '' : `last checked in row ${previous.row + 1}, spot ${previous.position + 1}: `}${color === 'correct' ? 'right letter and spot' : color === 'present' ? 'right letter, wrong spot' : 'letter not needed'}` : '';
       if (!interactive) return `<span class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" aria-label="${token.letter}${token.received ? ', received' : ''}${feedbackLabel}">${token.letter}</span>`;
       const focus = token.received ? `received-${row}` : `letter-${row}-${token.index}`;
       return `<button class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" data-action="${token.received ? 'received' : 'letter'}" data-row="${row}" data-index="${token.index}" data-focus="${focus}" aria-pressed="${Boolean(selected)}" aria-label="${token.received ? `Reposition or return received ${token.letter} in row ${row + 1}` : `Drag ${token.letter}, letter ${token.index + 1} of ${start}, to row ${row + 2}`}${feedbackLabel}">${token.letter}</button>`;
@@ -290,11 +303,16 @@ $('#undo').addEventListener('click', () => {
 $('#reset').addEventListener('click', () => {
   if (reset(currentState())) { selection = null; persist(); render(); announce('Board reset. Lives already lost stay used.'); }
 });
-$('#check').addEventListener('click', () => {
+$('#check').addEventListener('click', event => {
+  const keyboardCheck = event.detail === 0;
   selection = null;
-  const outcome = check(currentPuzzle(), currentState());
-  if (outcome.kind === 'duplicate') { announce('Try a different arrangement; this one was already checked and will not cost another life.'); return; }
+  const state = currentState();
+  const outcome = check(currentPuzzle(), state);
   if (outcome.kind === 'incomplete') return;
+  // Save the fresh attempt immediately; only the display holds the checked
+  // arrangement during the reveal, so reloading cannot restore a spent guess.
+  review = { state, board: state.board };
+  const restarting = nextAttempt(state);
   persist();
   revealing = true;
   render();
@@ -305,18 +323,20 @@ $('#check').addEventListener('click', () => {
     requestAnimationFrame(() => $('.post-pal').classList.add('happy'));
   }
   revealTimer = setTimeout(() => {
-    revealing = false;
-    document.querySelectorAll('.checking').forEach(row => row.classList.remove('checking'));
-    $('#result').classList.remove('reveal-result');
-    $('#check').disabled = currentState().status !== 'playing' || !complete(currentState());
-    $('#undo').disabled = currentState().status !== 'playing' || !currentState().undo.length;
-    $('#reset').disabled = currentState().status !== 'playing' || currentState().board.every(m => !m);
+    const before = restarting ? captureTiles($('#board')) : null;
+    stopReview();
+    render();
+    if (restarting) {
+      animateHandoff(before, null);
+      announce(`Letters returned. Colors remember the last check. ${livesRemaining(state)} ${livesRemaining(state) === 1 ? 'life' : 'lives'} left.`);
+      if (keyboardCheck) $('#board').focus({ preventScroll: true });
+    }
     if (currentState().status !== 'playing') {
       $('#result').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       $('#share-result')?.focus({ preventScroll: true });
     }
-  }, 850);
-  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? `All three lives used; the solution is shown below.` : `${outcome.correct.filter(Boolean).length} of 4 clues matched. One life lost; ${livesRemaining(currentState())} left.`);
+  }, restarting ? 2200 : 850);
+  announce(outcome.kind === 'won' ? 'All four clues matched!' : outcome.kind === 'lost' ? `All three lives used; the solution is shown below.` : outcome.kind === 'duplicate' ? 'Already checked: no life lost. Review the colors, then try a new attempt.' : `${outcome.correct.filter(Boolean).length} of 4 clues matched. One life lost; ${livesRemaining(state)} left. Letters will return for your next attempt.`);
 });
 
 function openDialog(id) { $(id).showModal(); }
@@ -330,6 +350,7 @@ document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('c
 }));
 
 function startPractice() {
+  stopReview();
   $('#help-dialog').close();
   practicing = true;
   archivePuzzle = null;
@@ -342,6 +363,7 @@ function startPractice() {
 $('#practice-button').addEventListener('click', startPractice);
 $('#unavailable-practice').addEventListener('click', startPractice);
 $('#exit-practice').addEventListener('click', () => {
+  stopReview();
   practicing = false;
   archivePuzzle = null;
   history.replaceState(null, '', new URL('./', location.href));
@@ -396,6 +418,7 @@ function refreshDay() {
   data = readStore();
   dailyState = dailyPuzzle ? restore(dailyPuzzle, data.daily[dailyPuzzle.id]) : null;
   if (!practicing && !archivePuzzle) {
+    stopReview();
     selection = null;
     render();
     announce(dailyPuzzle ? 'It’s a new UTC day. Your next relay is ready.' : 'No new daily relay is scheduled. Practice is still available.');
@@ -408,7 +431,7 @@ window.addEventListener('storage', event => {
   data = readStore();
   if (dailyPuzzle) dailyState = restore(dailyPuzzle, data.daily[dailyPuzzle.id]);
   if (archivePuzzle) archiveState = restore(archivePuzzle, data.archive?.[archivePuzzle.id]);
-  if (!practicing) { selection = null; render(); announce('Progress updated from another tab.'); }
+  if (!practicing) { stopReview(); selection = null; render(); announce('Progress updated from another tab.'); }
   if ($('#stats-dialog').open) renderStats();
 });
 
@@ -461,8 +484,8 @@ document.querySelectorAll('.dialog-tabs').forEach(tabs => {
 });
 
 function openPuzzle(puzzle, index) {
-  practicing = false; selection = null; revealing = false;
-  clearTimeout(revealTimer);
+  practicing = false; selection = null;
+  stopReview();
   data = readStore();
   if (index === today && puzzle.kind !== 'hard') {
     archivePuzzle = null;

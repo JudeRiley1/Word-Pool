@@ -16,7 +16,7 @@ export function animateHandoff(before, movingKey, root = document) {
       ghost.removeAttribute('id');
       ghost.setAttribute('aria-hidden', 'true');
       ghost.tabIndex = -1;
-      ghost.className = 'tile flying-tile';
+      ghost.className = `tile flying-tile ${[...tile.classList].find(name => name.startsWith('letter-')) || ''}`;
       Object.assign(ghost.style, { left: `${old.left}px`, top: `${old.top}px`, width: `${dest.width}px`, height: `${dest.height}px` });
       (root instanceof HTMLDialogElement ? root : document.body).append(ghost);
       tile.style.visibility = 'hidden';
@@ -76,8 +76,9 @@ export function installDrag(board, { enabled, begin, target, drop, cancel }) {
     if (!ghost && Math.hypot(pending.x - pending.startX, pending.y - pending.startY) < 9) return;
     if (!ghost) {
       const label = pending.tile.textContent;
+      const feedbackClass = [...pending.tile.classList].find(name => name.startsWith('letter-')) || '';
       begin(pending.tile);
-      ghost = document.createElement('div'); ghost.className = 'tile drag-ghost';
+      ghost = document.createElement('div'); ghost.className = `tile drag-ghost ${feedbackClass}`;
       ghost.textContent = label; ghost.setAttribute('aria-hidden', 'true');
       (board.closest('dialog') || document.body).append(ghost); board.classList.add('dragging');
       frame = requestAnimationFrame(tick);

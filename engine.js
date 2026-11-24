@@ -6,7 +6,7 @@ export const score = state => state.status === 'won' ? livesRemaining(state) : 0
 export const DAY_MS = 86400000;
 export const copy = value => JSON.parse(JSON.stringify(value));
 export const emptyBoard = () => [null, null, null];
-export const newState = () => ({ rulesVersion: 2, board: emptyBoard(), undo: [], checks: [], status: 'playing' });
+export const newState = () => ({ rulesVersion: 2, board: emptyBoard(), undo: [], checks: [], feedbackBoard: null, status: 'playing' });
 
 export function dayIndex(startDate, now = Date.now()) {
   return Math.floor((now - Date.parse(`${startDate}T00:00:00Z`)) / DAY_MS);
@@ -43,6 +43,30 @@ export function letterFeedback(word, answer) {
     }
   });
   return colors;
+}
+
+// Feedback belongs to a physical tile and its last tested position, not to a
+// letter value: repeated letters may have different results.
+export function tileFeedback(puzzle, state) {
+  const board = state.feedbackBoard;
+  if (!board) return {};
+  const feedback = {};
+  puzzle.starts.forEach((_, row) => {
+    const rowTokens = tokens(puzzle, board, row);
+    const colors = letterFeedback(rowTokens.map(t => t.letter).join(''), puzzle.answers[row]);
+    rowTokens.forEach((token, position) => {
+      const key = token.received ? `${row - 1}-${board[row - 1].index}` : `${row}-${token.index}`;
+      feedback[key] = { color: colors[position], row, position };
+    });
+  });
+  return feedback;
+}
+
+export function nextAttempt(state) {
+  if (state.status !== 'playing' || !complete(state) || !state.feedbackBoard) return false;
+  state.board = emptyBoard();
+  state.undo = [];
+  return true;
 }
 
 export function validBoard(puzzle, board) {
@@ -88,7 +112,9 @@ export function check(puzzle, state) {
   if (state.status !== 'playing' || !complete(state)) return { kind: 'incomplete' };
   const currentWords = words(puzzle, state.board);
   const signature = currentWords.join('|');
-  if (state.checks.some(c => c.signature === signature)) return { kind: 'duplicate' };
+  state.feedbackBoard = copy(state.board);
+  const previous = state.checks.find(c => c.signature === signature);
+  if (previous) return { kind: 'duplicate', correct: previous.correct };
   const correct = currentWords.map((word, row) => word === puzzle.answers[row]);
   state.checks.push({ signature, correct });
   if (correct.every(Boolean)) state.status = 'won';
@@ -114,6 +140,7 @@ export function restore(puzzle, saved) {
   return {
     rulesVersion: saved.rulesVersion !== 2 && status !== 'playing' ? 1 : 2,
     board: copy(saved.board), checks, status,
+    feedbackBoard: validBoard(puzzle, saved.feedbackBoard) && saved.feedbackBoard.every(Boolean) && signatures.has(words(puzzle, saved.feedbackBoard).join('|')) ? copy(saved.feedbackBoard) : null,
     undo: Array.isArray(saved.undo) ? saved.undo.filter(b => validBoard(puzzle, b)).slice(-100).map(copy) : []
   };
 }

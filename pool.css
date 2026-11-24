@@ -97,9 +97,9 @@ html[data-theme="pool"] { --paper:#05b4c9; --ink:#49334e; --muted:#6c596d; --pur
 [data-theme="pool"] .check-dot.used { color:#fff; border-color:#67416d; background:#67416d; }
 [data-theme="pool"] .check-counter { color:#6c596d; }
 [data-theme="pool"] .puzzle-row.matched { background:#d9ecdf; }
-[data-theme="pool"] .puzzle-row .tile.letter-correct { background:#35805c; border-color:#266044; box-shadow:0 3px 0 #266044; color:#fff; }
-[data-theme="pool"] .puzzle-row .tile.letter-present { background:#f2ce71; border-color:#bd943b; box-shadow:0 3px 0 #bd943b; color:#493913; }
-[data-theme="pool"] .puzzle-row .tile.letter-absent { background:#756c7b; border-color:#554d5c; box-shadow:0 3px 0 #554d5c; color:#fff; }
+[data-theme="pool"] .puzzle-row .tile.letter-correct, [data-theme="pool"] .drag-ghost.letter-correct, [data-theme="pool"] .flying-tile.letter-correct { background:#35805c; border-color:#266044; box-shadow:0 3px 0 #266044; color:#fff; }
+[data-theme="pool"] .puzzle-row .tile.letter-present, [data-theme="pool"] .drag-ghost.letter-present, [data-theme="pool"] .flying-tile.letter-present { background:#f2ce71; border-color:#bd943b; box-shadow:0 3px 0 #bd943b; color:#493913; }
+[data-theme="pool"] .puzzle-row .tile.letter-absent, [data-theme="pool"] .drag-ghost.letter-absent, [data-theme="pool"] .flying-tile.letter-absent { background:#756c7b; border-color:#554d5c; box-shadow:0 3px 0 #554d5c; color:#fff; }
 [data-theme="pool"] .drag-ghost,[data-theme="pool"] .flying-tile { border-color:#79a4ad; background:#fff9ed; box-shadow:0 5px 0 #79a4ad; }
 [data-theme="pool"] dialog { background:#fff9ed; border-color:#dfd2d6; color:#49334e; box-shadow:0 6px 0 #49334e33; }
 [data-theme="pool"] dialog p,[data-theme="pool"] .rules,[data-theme="pool"] .keyboard-note { color:#6c596d; }

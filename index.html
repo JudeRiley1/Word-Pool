@@ -43,6 +43,7 @@
       <div id="practice-banner" class="practice-banner" hidden><span><strong id="mode-label">Practice relay</strong><br><span id="mode-note">Separate from your daily stats</span></span><button id="exit-practice" class="text-button">Back to daily</button></div>
       <section id="game" aria-label="Word Pool puzzle">
         <div class="board-header"><span><span id="puzzle-label">TODAY</span><small id="difficulty">Steady</small></span><span id="delivery-progress" class="delivery-progress">0/3 letters moved</span></div>
+        <p id="feedback-note" class="feedback-note" hidden></p>
         <div id="board" tabindex="-1"></div>
         <div class="game-controls">
           <div class="controls-heading"><div class="instruction" id="instruction" aria-live="polite">Drag a letter into the word below</div><span id="checks-label" class="checks-remaining">3 lives</span></div>
@@ -73,6 +74,7 @@
         <li><strong>Keep your three lives</strong><span>Each wrong check costs one life; three ends the round. Repeated guesses are free. Score = lives saved</span></li>
       </ol>
       <div class="help-colors" aria-label="Letter feedback"><span><i class="right-color"></i>Right spot</span><span><i class="near-color"></i>Wrong spot</span><span><i class="wrong-color"></i>Not needed</span></div>
+      <p class="compact-note">After a wrong check, letters return to the start. Colors stay on each letter as a reminder of its last tested spot. Make three fresh moves to try again.</p>
     </section>
     <section id="help-controls" class="help-panel" role="tabpanel" aria-labelledby="help-controls-tab" hidden>
       <dl class="quick-controls">

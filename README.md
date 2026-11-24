@@ -128,3 +128,8 @@ The flat Word Pool revision also checks full-viewport bounds, mascot pointer lay
 ## Release cache
 
 `npm run build` creates `public/` with a content-based release version on the stylesheet, entry script, and every module import. GitHub Actions publishes that folder. An already-open tab still needs a refresh to load a new release; saved puzzle progress is retained. If an older interface remains visible, use Ctrl+Shift+R (Windows) to reload it.
+
+
+### Fresh attempts after checking
+
+An unsuccessful check briefly shows the submitted arrangement and its letter colors, then returns all transferred letters to their starting rows. Colors follow each physical tile, including repeated letters, as feedback about its last tested row and position; new moves do not reveal new information. The fresh board, colors and spent lives survive reloads, including a reload during the reveal. Undo starts fresh for each attempt. Duplicate guesses show feedback and reset without costing a life. Wins and the final losing attempt remain on the board.

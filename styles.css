@@ -314,9 +314,9 @@ button.tile:hover { transform: translateY(-2px); }
 .drop-marker { position: absolute; width: 4px; top: -4px; bottom: -4px; border-radius: 4px; background: #7351cc; box-shadow: 0 0 0 2px #fff; z-index: 2; pointer-events: none; }
 .drop-preview { margin: 8px 0 0; text-align: center; font-size: 12px; font-weight: 900; color: #624092; min-height: 17px; }
 .drop-row .row-meta { display: none; }
-.puzzle-row .tile.letter-correct { background: #368354; border-color: #28653f; color: #fff; box-shadow: 0 4px 0 #28653f; }
-.puzzle-row .tile.letter-present { background: #f3cc6a; border-color: #c49b3c; color: #513c16; box-shadow: 0 4px 0 #c49b3c; }
-.puzzle-row .tile.letter-absent { background: #727985; border-color: #535b67; color: #fff; box-shadow: 0 4px 0 #535b67; }
+.puzzle-row .tile.letter-correct, .drag-ghost.letter-correct, .flying-tile.letter-correct { background: #368354; border-color: #28653f; color: #fff; box-shadow: 0 4px 0 #28653f; }
+.puzzle-row .tile.letter-present, .drag-ghost.letter-present, .flying-tile.letter-present { background: #f3cc6a; border-color: #c49b3c; color: #513c16; box-shadow: 0 4px 0 #c49b3c; }
+.puzzle-row .tile.letter-absent, .drag-ghost.letter-absent, .flying-tile.letter-absent { background: #727985; border-color: #535b67; color: #fff; box-shadow: 0 4px 0 #535b67; }
 .color-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin: 9px 0 0; color: var(--muted); font-size: 11px; }
 .color-legend span { display: inline-flex; align-items: center; gap: 4px; }
 .color-legend i { display: block; height: 11px; width: 11px; border-radius: 3px; }
@@ -333,3 +333,4 @@ button.tile:hover { transform: translateY(-2px); }
 .hard-invite p { font-size: 13px; margin: 0; }
 .hard-invite small { color: var(--muted); font-size: 12px; }
 .hard-invite .challenge-button { font-size: 18px; background: #513985; border-color: #36225f; box-shadow: 0 4px 0 #36225f; margin-top: 15px; }
+.feedback-note { margin:0 0 12px; padding:9px 12px; border-radius:10px; background:#e0f1f3; color:#316370; font-size:12px; line-height:1.45; font-weight:700; }
