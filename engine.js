@@ -1,0 +1,135 @@
+export const MAX_CHECKS = 6;
+export const DAY_MS = 86400000;
+export const copy = value => JSON.parse(JSON.stringify(value));
+export const emptyBoard = () => [null, null, null];
+export const newState = () => ({ board: emptyBoard(), undo: [], checks: [], status: 'playing' });
+
+export function dayIndex(startDate, now = Date.now()) {
+  return Math.floor((now - Date.parse(`${startDate}T00:00:00Z`)) / DAY_MS);
+}
+
+// A gap is anchored to the ORIGINAL destination word. Removing an original
+// letter never removes, transfers, or reorders an incoming letter.
+export function tokens(puzzle, board, row) {
+  const result = [];
+  const incoming = row > 0 ? board[row - 1] : null;
+  const outgoing = row < 3 ? board[row] : null;
+  for (let i = 0; i <= puzzle.starts[row].length; i++) {
+    if (incoming && incoming.gap === i) {
+      result.push({ letter: puzzle.starts[row - 1][incoming.index], received: true, index: -1 });
+    }
+    if (i < puzzle.starts[row].length && outgoing?.index !== i) {
+      result.push({ letter: puzzle.starts[row][i], received: false, index: i });
+    }
+  }
+  return result;
+}
+
+export const words = (puzzle, board) => puzzle.starts.map((_, row) => tokens(puzzle, board, row).map(t => t.letter).join(''));
+export const complete = state => state.board.every(Boolean);
+
+export function validBoard(puzzle, board) {
+  return Array.isArray(board) && board.length === 3 && board.every((m, row) => m === null || (
+    m && Number.isInteger(m.index) && m.index >= 0 && m.index < puzzle.starts[row].length &&
+    Number.isInteger(m.gap) && m.gap >= 0 && m.gap <= puzzle.starts[row + 1].length
+  ));
+}
+
+export function move(puzzle, state, row, index, gap) {
+  if (state.status !== 'playing' || !Number.isInteger(row) || row < 0 || row > 2) return false;
+  const next = copy(state.board);
+  next[row] = { index, gap };
+  if (!validBoard(puzzle, next) || JSON.stringify(next) === JSON.stringify(state.board)) return false;
+  state.undo.push(copy(state.board));
+  state.undo = state.undo.slice(-100);
+  state.board = next;
+  return true;
+}
+
+export function undo(state) {
+  if (state.status !== 'playing' || !state.undo.length) return false;
+  state.board = state.undo.pop();
+  return true;
+}
+
+export function reset(state) {
+  if (state.status !== 'playing' || state.board.every(m => !m)) return false;
+  state.undo.push(copy(state.board));
+  state.board = emptyBoard();
+  return true;
+}
+
+export function check(puzzle, state) {
+  if (state.status !== 'playing' || !complete(state)) return { kind: 'incomplete' };
+  const currentWords = words(puzzle, state.board);
+  const signature = currentWords.join('|');
+  if (state.checks.some(c => c.signature === signature)) return { kind: 'duplicate' };
+  const correct = currentWords.map((word, row) => word === puzzle.answers[row]);
+  state.checks.push({ signature, correct });
+  if (correct.every(Boolean)) state.status = 'won';
+  else if (state.checks.length === MAX_CHECKS) state.status = 'lost';
+  return { kind: state.status, correct };
+}
+
+export function restore(puzzle, saved) {
+  if (!saved || !validBoard(puzzle, saved.board) || !Array.isArray(saved.checks) || saved.checks.length > 6) return newState();
+  const signatures = new Set();
+  for (const c of saved.checks) {
+    if (typeof c.signature !== 'string' || signatures.has(c.signature) || !Array.isArray(c.correct) || c.correct.length !== 4 || c.correct.some(v => typeof v !== 'boolean')) return newState();
+    const submitted = c.signature.split('|');
+    if (submitted.length !== 4 || c.correct.some((v, row) => v !== (submitted[row] === puzzle.answers[row]))) return newState();
+    signatures.add(c.signature);
+  }
+  const checks = copy(saved.checks);
+  const wonAt = checks.findIndex(c => c.correct.every(Boolean));
+  if (wonAt !== -1 && wonAt !== checks.length - 1) return newState();
+  const status = wonAt !== -1 ? 'won' : checks.length === 6 ? 'lost' : 'playing';
+  if (status !== 'playing' && words(puzzle, saved.board).join('|') !== checks.at(-1).signature) return newState();
+  return {
+    board: copy(saved.board), checks, status,
+    undo: Array.isArray(saved.undo) ? saved.undo.filter(b => validBoard(puzzle, b)).slice(-100).map(copy) : []
+  };
+}
+
+// Enumerate the real transfer rules, preserving original letter identities.
+export function solve(puzzle) {
+  const results = [];
+  const visit = (board, row) => {
+    if (row === 3) {
+      if (words(puzzle, board)[3] === puzzle.answers[3]) results.push(copy(board));
+      return;
+    }
+    for (let index = 0; index < puzzle.starts[row].length; index++) {
+      for (let gap = 0; gap <= puzzle.starts[row + 1].length; gap++) {
+        board[row] = { index, gap };
+        if (words(puzzle, board)[row] === puzzle.answers[row]) visit(board, row + 1);
+      }
+    }
+    board[row] = null;
+  };
+  visit(emptyBoard(), 0);
+  return results;
+}
+
+export function stats(results, today) {
+  const entries = Object.entries(results).filter(([day, r]) => Number.isInteger(Number(day)) && Number(day) <= today && ['won', 'lost'].includes(r.status)).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const distribution = [0, 0, 0, 0, 0, 0];
+  let wins = 0, best = 0, run = 0, previous = -Infinity;
+  for (const [key, result] of entries) {
+    const day = Number(key);
+    if (result.status === 'won') {
+      wins++;
+      run = day === previous + 1 ? run + 1 : 1;
+      best = Math.max(best, run);
+      if (result.checks >= 1 && result.checks <= 6) distribution[result.checks - 1]++;
+    } else run = 0;
+    previous = day;
+  }
+  const current = previous >= today - 1 ? run : 0;
+  return { played: entries.length, wins, current, best, distribution };
+}
+
+export function shareText(puzzle, state, url) {
+  return `Letter Relay #${String(puzzle.id).padStart(3, '0')} · ${state.status === 'won' ? state.checks.length : 'X'}/6\n` +
+    state.checks.map(c => c.correct.map(v => v ? '●' : '○').join(' ')).join('\n') + `\n${url}`;
+}

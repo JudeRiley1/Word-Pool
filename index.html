@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f0">
+  <meta name="description" content="Four words. Three letters. One little daily challenge. Pass letters down the board to solve Letter Relay.">
+  <title>Letter Relay — A daily word handoff</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#board">Skip to puzzle</a>
+  <div class="shell">
+    <header class="masthead">
+      <a class="brand" href="./" aria-label="Letter Relay home"><span class="brand-mark" aria-hidden="true">L<span>R</span></span><span>Letter Relay</span></a>
+      <nav aria-label="Game information">
+        <button id="help-button" class="nav-button"><span class="help-icon" aria-hidden="true">?</span><span>How to play</span></button>
+        <button id="stats-button" class="nav-button"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 16V10M10 16V4M17 16V7"/></svg><span>Stats</span></button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="intro" aria-labelledby="page-title">
+        <div class="edition"><span id="edition">DAILY RELAY</span><span class="edition-line"></span><span id="puzzle-date"></span></div>
+        <h1 id="page-title">A little shift.<br>A whole new word.</h1>
+        <p class="dek">Four words. Three letters. Pass it down.</p>
+      </section>
+
+      <div id="practice-banner" class="practice-banner" hidden><span><strong>Practice relay</strong> · A little room to learn.</span><button id="exit-practice" class="text-button">Back to daily</button></div>
+      <section id="game" aria-label="Letter Relay puzzle">
+        <div class="board-header"><span id="puzzle-label">TODAY’S PUZZLE</span><span class="received-key"><i aria-hidden="true"></i> received letter</span></div>
+        <div id="board" tabindex="-1"></div>
+        <div class="instruction" id="instruction" aria-live="polite">Select a letter. Find its next home.</div>
+        <div class="game-controls">
+          <div class="secondary-controls"><button id="undo" class="secondary-button"><span aria-hidden="true">↶</span> Undo</button><button id="reset" class="secondary-button">Reset board</button></div>
+          <div class="check-counter"><span id="checks-label">0 of 6 checks used</span><div id="check-dots" aria-hidden="true"></div></div>
+          <button id="check" class="primary-button" disabled>Check relay <span aria-hidden="true">✓</span></button>
+        </div>
+        <p id="message" class="message" role="status" aria-live="polite"></p>
+        <section id="result" class="result" aria-labelledby="result-title" hidden></section>
+      </section>
+      <section id="unavailable" class="unavailable" hidden><span class="eyebrow">A PAUSE IN THE RELAY</span><h2>No daily puzzle scheduled.</h2><p id="unavailable-text"></p><button id="unavailable-practice" class="primary-button">Play the practice relay</button></section>
+      <footer><span class="footer-flower" aria-hidden="true">✳</span><p>A small daily exercise in seeing things differently.</p><span>NEW PUZZLE AT MIDNIGHT UTC</span></footer>
+    </main>
+  </div>
+
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="dialog-top"><span class="eyebrow">THE HANDOFF</span><button class="close-button" data-close aria-label="Close how to play">×</button></div>
+    <h2 id="help-title">Good words travel.</h2>
+    <p>Turn each starting word into the answer to its clue. Send <strong>one original letter</strong> from each of the first three rows to the row below.</p>
+    <ol class="rules"><li><strong>Pick a letter.</strong> Tap an original letter in any of the first three rows.</li><li><strong>Pass it down.</strong> Tap a + slot in the next row to place it. The other letters stay in order.</li><li><strong>Follow all four clues.</strong> Complete three transfers, then check your relay. You get six checks.</li></ol>
+    <div class="rule-note">Start anywhere—even at the bottom. An incoming letter must stay in its new row. Tap it to reposition it, or choose another original letter to revise a transfer.</div>
+    <div class="practice-example" aria-label="Practice example: move G from GLASS to RAIN"><div><span class="example-sent">G</span><span>L</span><span>A</span><span>S</span><span>S</span></div><span class="example-arrow" aria-hidden="true">↓</span><div><span class="example-received">G</span><span class="example-sent">R</span><span>A</span><span>I</span><span>N</span></div><p>GLASS becomes LASS. RAIN becomes GAIN<br>when its R continues to the next row.</p></div>
+    <p class="keyboard-note"><strong>Keyboard:</strong> Tab to a letter and press Enter or Space. Tab to an insertion slot and activate it. Escape cancels your selection. Every control works with a keyboard.</p>
+    <button id="practice-button" class="primary-button">Try a practice relay</button><p class="dialog-fineprint">Replay anytime. Your daily stats stay separate.</p>
+  </dialog>
+
+  <dialog id="stats-dialog" aria-labelledby="stats-title"><div class="dialog-top"><span class="eyebrow">YOUR DAILY RITUAL</span><button class="close-button" data-close aria-label="Close statistics">×</button></div><h2 id="stats-title">The long run.</h2><div id="stats-content"></div><p class="dialog-fineprint">Saved in this browser. Practice doesn’t count.</p></dialog>
+
+  <dialog id="share-dialog" aria-labelledby="share-title"><div class="dialog-top"><span class="eyebrow">PASS IT ON</span><button class="close-button" data-close aria-label="Close share result">×</button></div><h2 id="share-title">Your relay, spoiler-free.</h2><p>Copy this result to share your daily handoff.</p><textarea id="share-text" rows="10" readonly aria-label="Result text to copy"></textarea><button id="select-share" class="primary-button">Select result text</button></dialog>
+  <noscript><p class="noscript">Letter Relay needs JavaScript to play. Please enable it and refresh.</p></noscript>
+</body>
+</html>
