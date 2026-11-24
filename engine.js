@@ -60,6 +60,14 @@ export function move(puzzle, state, row, index, gap) {
   return true;
 }
 
+export function recall(state, row, index) {
+  if (state.status !== 'playing' || !Number.isInteger(row) || row < 0 || row > 2 || !state.board[row] || state.board[row].index !== index) return false;
+  state.undo.push(copy(state.board));
+  state.undo = state.undo.slice(-100);
+  state.board[row] = null;
+  return true;
+}
+
 export function undo(state) {
   if (state.status !== 'playing' || !state.undo.length) return false;
   state.board = state.undo.pop();

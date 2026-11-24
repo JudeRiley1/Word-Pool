@@ -1,5 +1,5 @@
 import { START_DATE, PUZZLES, PRACTICE, BONUSES, CHALLENGES } from './puzzles.js';
-import { checkLimit, DAY_MS, newState, dayIndex, tokens, words, complete, move, undo, reset, check, restore, solve, stats, shareText, letterFeedback } from './engine.js';
+import { checkLimit, DAY_MS, newState, dayIndex, tokens, words, complete, move, recall, undo, reset, check, restore, solve, stats, shareText, letterFeedback } from './engine.js';
 import { deliverShare } from './sharing.js';
 import { puzzleDate, resolvePuzzleLink, puzzleLink, postcard, saveProgress, insertionGap } from './progression.js';
 import { captureTiles, animateHandoff, playSound, installDrag } from './effects.js';
@@ -89,6 +89,7 @@ function render() {
   $('#board').innerHTML = puzzle.starts.map((start, row) => {
     const outgoing = state.board[row];
     const receiving = selection && selection.row + 1 === row;
+    const returning = selection?.received && selection.row === row;
     const rowTokens = tokens(puzzle, state.board, row).filter(t => !(receiving && t.received));
     const colors = feedback && !selection ? letterFeedback(rowTokens.map(t => t.letter).join(''), puzzle.answers[row]) : null;
     const tileHTML = rowTokens.map((token, position) => {
@@ -99,11 +100,11 @@ function render() {
       const tileKey = token.received ? `${row - 1}-${state.board[row - 1].index}` : `${row}-${token.index}`;
       if (!interactive) return `<span class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" aria-label="${token.letter}${token.received ? ', received' : ''}${feedbackLabel}">${token.letter}</span>`;
       const focus = token.received ? `received-${row}` : `letter-${row}-${token.index}`;
-      return `<button class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" data-action="${token.received ? 'received' : 'letter'}" data-row="${row}" data-index="${token.index}" data-focus="${focus}" aria-pressed="${Boolean(selected)}" aria-label="${token.received ? `Reposition received ${token.letter} in row ${row + 1}` : `Drag ${token.letter}, letter ${token.index + 1} of ${start}, to row ${row + 2}`}${feedbackLabel}">${token.letter}</button>`;
+      return `<button class="${cls}" data-tile-key="${tileKey}" data-original-index="${token.index}" data-action="${token.received ? 'received' : 'letter'}" data-row="${row}" data-index="${token.index}" data-focus="${focus}" aria-pressed="${Boolean(selected)}" aria-label="${token.received ? `Reposition or return received ${token.letter} in row ${row + 1}` : `Drag ${token.letter}, letter ${token.index + 1} of ${start}, to row ${row + 2}`}${feedbackLabel}">${token.letter}</button>`;
     }).join('');
-    return `<section data-board-row="${row}" class="puzzle-row${feedback?.correct[row] ? ' matched' : ''}${receiving ? ' drop-row' : ''}${revealing ? ' checking' : ''}" style="--reveal-delay:${row * 140}ms" aria-label="Row ${row + 1}: ${esc(puzzle.clues[row])}">
+    return `<section data-board-row="${row}" class="puzzle-row${feedback?.correct[row] ? ' matched' : ''}${receiving || returning ? ' drop-row' : ''}${returning ? ' return-row' : ''}${revealing ? ' checking' : ''}" style="--reveal-delay:${row * 140}ms" aria-label="Row ${row + 1}: ${esc(puzzle.clues[row])}">
       <div class="row-heading"><span class="row-number" aria-hidden="true">${row + 1}</span><div class="clue-block"><p class="clue">${esc(puzzle.clues[row])}</p>${feedback ? `<span class="row-status${feedback.correct[row] ? ' correct' : ''}">${feedback.correct[row] ? '✓ Clue matched!' : '○ Try another delivery'}</span>` : ''}</div></div>
-      <div class="row-word"><div class="tile-line">${tileHTML}${receiving ? '<span class="drop-marker" hidden aria-hidden="true"></span>' : ''}</div><div class="row-meta"><span class="starting-word">From ${start}</span>${outgoing ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : ''}</div>${receiving ? `<p class="drop-preview">Drop ${puzzle.starts[selection.row][selection.index]} into this word</p>` : ''}</div></section>`;
+      <div class="row-word"><div class="tile-line">${tileHTML}${receiving || returning ? '<span class="drop-marker" hidden aria-hidden="true"></span>' : ''}</div><div class="row-meta"><span class="starting-word">From ${start}</span>${outgoing ? `<span class="starting-word">· ${start[outgoing.index]} sent</span>` : ''}</div>${receiving || returning ? `<p class="drop-preview">${returning ? `Return ${start[selection.index]} to its original spot` : `Drop ${puzzle.starts[selection.row][selection.index]} into this word`}</p>` : ''}</div></section>`;
   }).join('');
   $('#undo').disabled = ended || revealing || !state.undo.length;
   $('#reset').disabled = ended || revealing || state.board.every(m => !m);
@@ -111,7 +112,7 @@ function render() {
   $('#check').innerHTML = ended ? state.status === 'won' ? 'Relay complete <span aria-hidden="true">✓</span>' : 'Relay finished' : 'Check relay <span aria-hidden="true">✓</span>';
   $('#checks-label').textContent = `${state.checks.length} of ${checkLimit(puzzle)} checks used`;
   $('#check-dots').innerHTML = Array.from({ length: checkLimit(puzzle) }, (_, i) => `<span class="check-dot${i < state.checks.length ? ' used' : ''}">${i < state.checks.length ? '✓' : i + 1}</span>`).join('');
-  $('#instruction').textContent = ended ? 'Relay finished' : selection?.keyboard ? 'Left / Right to choose a spot, Enter to drop, Esc to cancel' : selection ? `Drag into row ${selection.row + 2} and release at the marker` : complete(state) ? 'Ready to check your words?' : 'Drag a letter into the word below';
+  $('#instruction').textContent = ended ? 'Relay finished' : selection?.keyboard ? `Left / Right to choose a spot, Enter to drop${selection.received ? ', Backspace to return' : ''}, Esc to cancel` : selection?.received ? `Move within row ${selection.row + 2}, or return to row ${selection.row + 1}` : selection ? `Drag into row ${selection.row + 2} and release at the marker` : complete(state) ? 'Ready to check your words?' : 'Drag a letter into the word below';
   renderResult(puzzle, state);
   if (active) focusKey(active);
 }
@@ -154,6 +155,38 @@ function placeLetter(gap, dragRect) {
   return row;
 }
 
+function returnLetter(dragRect) {
+  if (!selection?.received) return;
+  const { row, index } = selection;
+  const before = captureTiles($('#board')), key = `${row}-${index}`;
+  if (dragRect) before.set(key, dragRect);
+  const changed = recall(currentState(), row, index);
+  selection = null;
+  if (changed) persist();
+  render();
+  if (changed) { animateHandoff(before, key); playSound(preferences.sound); }
+  announce(`${currentPuzzle().starts[row][index]} returned to its original spot in row ${row + 1}`);
+  focusKey(`letter-${row}-${index}`);
+}
+
+function showReturnTarget() {
+  const { row, index } = selection;
+  const element = $(`[data-board-row="${row}"]`), line = element.querySelector('.tile-line');
+  const preview = currentState().board.map(m => m && { ...m });
+  preview[row] = null;
+  const restored = tokens(currentPuzzle(), preview, row);
+  const position = restored.findIndex(t => !t.received && t.index === index);
+  const next = restored[position + 1];
+  const nextKey = next && (next.received ? `${row - 1}-${preview[row - 1].index}` : `${row}-${next.index}`);
+  const nextTile = nextKey && line.querySelector(`[data-tile-key="${nextKey}"]`);
+  const endTile = [...line.querySelectorAll('.tile')].at(-1);
+  const left = nextTile ? nextTile.getBoundingClientRect().left - 5 : endTile.getBoundingClientRect().right + 3;
+  const rect = line.getBoundingClientRect(), marker = line.querySelector('.drop-marker');
+  marker.style.left = `${Math.max(1, Math.min(rect.width - 5, left - rect.left))}px`;
+  marker.hidden = false; element.classList.add('is-over');
+  element.querySelector('.drop-preview').textContent = `Return ${currentPuzzle().starts[row][index]}: ${words(currentPuzzle(), preview)[row]}`;
+}
+
 function showDropGap(gap) {
   const row = $(`[data-board-row="${selection.row + 1}"]`);
   const line = row.querySelector('.tile-line'), marker = row.querySelector('.drop-marker');
@@ -172,11 +205,21 @@ installDrag($('#board'), {
   enabled: () => currentState()?.status === 'playing' && !revealing,
   begin: button => {
     const row = Number(button.dataset.row) - (button.dataset.action === 'received' ? 1 : 0);
-    selection = { row, index: button.dataset.action === 'received' ? currentState().board[row].index : Number(button.dataset.index) };
+    selection = { row, index: button.dataset.action === 'received' ? currentState().board[row].index : Number(button.dataset.index), received: button.dataset.action === 'received' };
     announce(''); render();
   },
   target: (x, y) => {
     if (!selection) return null;
+    for (const element of document.querySelectorAll('.drop-row')) {
+      element.classList.remove('is-over'); element.querySelector('.drop-marker').hidden = true;
+    }
+    if (selection.received) {
+      const origin = $(`[data-board-row="${selection.row}"]`), bounds = origin.getBoundingClientRect();
+      origin.querySelector('.drop-preview').textContent = `Return ${currentPuzzle().starts[selection.row][selection.index]} to its original spot`;
+      if (x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom) {
+        showReturnTarget(); return 'return';
+      }
+    }
     const row = $(`[data-board-row="${selection.row + 1}"]`), rect = row.getBoundingClientRect();
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       row.classList.remove('is-over'); row.querySelector('.drop-marker').hidden = true;
@@ -190,7 +233,7 @@ installDrag($('#board'), {
     const gap = insertionGap(positions, x, currentPuzzle().starts[selection.row + 1].length);
     showDropGap(gap); return gap;
   },
-  drop: placeLetter,
+  drop: (target, rect) => target === 'return' ? returnLetter(rect) : placeLetter(target, rect),
   cancel: () => { selection = null; render(); announce('Drag cancelled; your board is unchanged'); }
 });
 
@@ -204,7 +247,7 @@ $('#board').addEventListener('click', event => {
   if (action === 'letter' || action === 'received') {
     const row = Number(button.dataset.row) - (action === 'received' ? 1 : 0);
     const index = action === 'received' ? state.board[row].index : Number(button.dataset.index);
-    selection = { row, index, keyboard: true };
+    selection = { row, index, keyboard: true, received: action === 'received' };
     announce('');
     render();
     keyboardGap = tokens(puzzle, state.board, row + 1).find(t => !t.received)?.index ?? 0;
@@ -214,6 +257,9 @@ $('#board').addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
+  if (selection?.keyboard && selection.received && ['Backspace', 'Delete'].includes(event.key) && !$('dialog[open]')) {
+    event.preventDefault(); returnLetter(); return;
+  }
   if (selection?.keyboard && ['ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key) && !$('dialog[open]')) {
     event.preventDefault();
     if (event.key === 'Enter' || event.key === ' ') { const row = placeLetter(keyboardGap); focusKey(`received-${row + 1}`); return; }

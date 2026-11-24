@@ -51,8 +51,8 @@ The object above demonstrates the format using puzzle 1; **write a new puzzle in
 
 - Drag any original letter into the next row. A live insertion marker and word preview show exactly where it will land. Tapping does not select a letter.
 - Work in any order. Incomplete intermediate words are allowed. Received letters carry a small envelope marker and cannot be passed onward.
-- Drag a received letter within its row to reposition it. Drag another original letter down to replace that row’s outgoing letter; the previous one returns automatically.
-- For keyboard play, Tab to a letter, press Enter or Space to pick it up, use Left/Right to select the insertion point, then Enter to drop. Escape cancels. Dialogs support Escape and return focus to their opener.
+- Drag a received letter within its row to reposition it, or back to its original row to cancel that transfer and restore its original position. Returning a letter preserves checks and can itself be undone. Drag another original letter down to replace that row’s outgoing letter; the previous one returns automatically.
+- For keyboard play, Tab to a letter, press Enter or Space to pick it up, use Left/Right to select the insertion point, then Enter to drop. Backspace returns a picked-up received letter to its origin. Escape cancels. Dialogs support Escape and return focus to their opener.
 - Undo and Reset Board retain used checks. Reset can itself be undone. Any previously checked identical arrangement is free to resubmit, including equivalent repeated-letter arrangements.
 - After six different unsuccessful checks, the board locks and displays the answers and transfer route. A win also locks and saves the board.
 - How to Play opens a separate, replayable practice puzzle. Practice never writes daily progress or stats.
